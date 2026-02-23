@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gradle wrapper:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 10 npm run dev:*)",
+      "WebSearch",
+      "WebFetch(domain:dribbble.com)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "mcp__plugin_serena_serena__list_memories",
+      "mcp__plugin_serena_serena__list_dir",
+      "Bash(pkill:*)",
+      "WebFetch(domain:escapefromtarkov.fandom.com)",
+      "mcp__plugin_serena_serena__replace_content",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

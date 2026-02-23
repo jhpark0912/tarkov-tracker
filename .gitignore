@@ -1,6 +1,3 @@
-# Claude Code 설정 (로컬 전용)
-.claude/
-
 # 환경 변수
 .env
 .env.*
