@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Eye, EyeOff, Crown, AlertCircle, ChevronLeft } from 'lucide-react';
+import { Eye, EyeOff, Crown, AlertCircle, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useMapStore } from '../../store/mapStore';
 import { useProgressStore } from '../../store/progressStore';
+import MapQuestPanel from './components/MapQuestPanel';
 import type { QuestMapMarker } from '../../types/map';
 
 interface MarkerPopup {
   marker: QuestMapMarker;
-  x: number;
-  y: number;
 }
 
 export default function MapViewPage() {
@@ -18,6 +17,7 @@ export default function MapViewPage() {
   const { currentMap, markers, loading, error, fetchMapDetail, fetchMarkers, clearCurrentMap } = useMapStore();
   const { questStatuses } = useProgressStore();
 
+  // ── Map / filter state ──────────────────────────────────────────────────────
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
   const [kappaOnly, setKappaOnly] = useState(false);
@@ -26,29 +26,40 @@ export default function MapViewPage() {
   const [svgViewBox, setSvgViewBox] = useState<{ w: number; h: number } | null>(null);
   const [containerSize, setContainerSize] = useState<{ w: number; h: number } | null>(null);
 
+  // ── Zoom / pan state ────────────────────────────────────────────────────────
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  // refs: 이벤트 핸들러에서 stale closure 방지
+  const zoomPanRef = useRef({ zoom: 1, pan: { x: 0, y: 0 } });
+  zoomPanRef.current = { zoom, pan };
+  const dragRef = useRef({ active: false, startX: 0, startY: 0, panX: 0, panY: 0, moved: false });
+  const selectedFloorRef = useRef(selectedFloor);
+  selectedFloorRef.current = selectedFloor;
+
+  // ── Panel state ─────────────────────────────────────────────────────────────
+  const [showPanel, setShowPanel] = useState(true);
+  const [selectedQuestIds, setSelectedQuestIds] = useState<Set<number>>(new Set());
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<HTMLDivElement>(null);
 
-  // dangerouslySetInnerHTML 객체를 메모이제이션 — 리렌더 시 innerHTML 재설정 방지
+  // ── SVG 처리 ────────────────────────────────────────────────────────────────
   const svgHtml = useMemo(
     () => (svgContent ? { __html: svgContent } : undefined),
     [svgContent]
   );
 
-  // SVG viewBox 파싱 — 실제 종횡비 확인용
   useEffect(() => {
     if (!svgContent) { setSvgViewBox(null); return; }
     const m = svgContent.match(/viewBox="([^"]+)"/);
     if (m) {
       const parts = m[1].trim().split(/\s+/);
-      if (parts.length >= 4) {
-        setSvgViewBox({ w: parseFloat(parts[2]), h: parseFloat(parts[3]) });
-      }
+      if (parts.length >= 4) setSvgViewBox({ w: parseFloat(parts[2]), h: parseFloat(parts[3]) });
     }
   }, [svgContent]);
 
-  // 컨테이너 크기 추적 (ResizeObserver)
-  // currentMap이 설정된 후에 실행해야 mapContainerRef.current가 DOM에 존재함
+  // currentMap 의존성: loading=true 시 ref가 null이어서 [] deps로는 관찰 미설치
   useEffect(() => {
     const el = mapContainerRef.current;
     if (!el) return;
@@ -60,7 +71,6 @@ export default function MapViewPage() {
     return () => obs.disconnect();
   }, [currentMap]);
 
-  // SVG 실제 렌더링 영역 계산 (letterbox 오프셋 포함)
   const svgBounds = useMemo(() => {
     if (!svgViewBox || !containerSize) return null;
     const scale = Math.min(containerSize.w / svgViewBox.w, containerSize.h / svgViewBox.h);
@@ -74,20 +84,23 @@ export default function MapViewPage() {
     };
   }, [svgViewBox, containerSize]);
 
-  // 맵 상세 로딩
+  // ── 데이터 로딩 ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!normalizedName) return;
     fetchMapDetail(normalizedName);
-    return () => { clearCurrentMap(); setSvgContent(null); };
+    return () => {
+      clearCurrentMap();
+      setSvgContent(null);
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+      setSelectedQuestIds(new Set());
+    };
   }, [normalizedName, fetchMapDetail, clearCurrentMap]);
 
-  // 맵 로딩 완료 후 기본 층 설정 + 마커 로딩 + SVG fetch
   useEffect(() => {
     if (!currentMap) return;
-    const defaultFloor = currentMap.defaultFloor ?? currentMap.floors[0]?.floorId ?? null;
-    setSelectedFloor(defaultFloor);
+    setSelectedFloor(currentMap.defaultFloor ?? currentMap.floors[0]?.floorId ?? null);
     fetchMarkers(currentMap.id);
-
     if (currentMap.svgFile) {
       fetch(`/maps/${currentMap.svgFile}`)
         .then((r) => r.text())
@@ -102,85 +115,140 @@ export default function MapViewPage() {
     }
   }, [currentMap, fetchMarkers]);
 
-  // 층 가시성 토글 (SVG 그룹 style 직접 조작)
+  // ── 층 가시성 (SVG 그룹 직접 조작) ──────────────────────────────────────────
   useEffect(() => {
     if (!svgRef.current || !selectedFloor || !currentMap) return;
     const container = svgRef.current;
-    const groundFloorId = currentMap.defaultFloor;
-    const isGroundSelected = selectedFloor === groundFloorId;
-
+    const groundId = currentMap.defaultFloor;
+    const isGround = selectedFloor === groundId;
     currentMap.floors.forEach((f) => {
       const el = container.querySelector<SVGGElement>(`#${CSS.escape(f.floorId)}`);
       if (!el) return;
-
       el.style.transition = 'opacity 0.4s ease, filter 0.4s ease';
-
       if (f.floorId === selectedFloor) {
-        // 선택된 층: 완전히 표시
-        el.style.display = 'inline';
-        el.style.opacity = '1';
-        el.style.filter = 'none';
-      } else if (f.floorId === groundFloorId && !isGroundSelected) {
-        // 지상(defaultFloor): 다른 층 선택 시 항상 블러 배경으로 표시
-        el.style.display = 'inline';
-        el.style.opacity = '0.2';
-        el.style.filter = 'blur(3px)';
+        el.style.display = 'inline'; el.style.opacity = '1'; el.style.filter = 'none';
+      } else if (f.floorId === groundId && !isGround) {
+        el.style.display = 'inline'; el.style.opacity = '0.2'; el.style.filter = 'blur(3px)';
       } else {
-        // 그 외 층: 숨김
         el.style.display = 'none';
       }
     });
   }, [selectedFloor, svgContent, currentMap]);
 
+  // ── 층 헬퍼 ─────────────────────────────────────────────────────────────────
   const floors = currentMap?.floors ?? [];
   const floorIndex = floors.findIndex((f) => f.floorId === selectedFloor);
 
-  const isCompleted = (questId: number) =>
-    questStatuses[String(questId)] === 'COMPLETED';
-
-  const visibleMarkers = markers.filter((m) => {
-    if (m.positionX === null || m.positionY === null) return false;
-    if (selectedFloor && m.floorId && m.floorId !== selectedFloor) return false;
-    if (hideCompleted && isCompleted(m.questId)) return false;
-    if (kappaOnly && !m.kappaRequired) return false;
-    return true;
-  });
-
-  const switchFloor = useCallback((nextFloorId: string) => {
-    setSelectedFloor(nextFloorId);
-  }, []);
+  const switchFloor = useCallback((id: string) => setSelectedFloor(id), []);
 
   const changeFloor = useCallback(
-    (direction: 'up' | 'down') => {
-      const idx = floors.findIndex((f) => f.floorId === selectedFloor);
-      const nextIdx = direction === 'up' ? idx + 1 : idx - 1;
-      if (nextIdx < 0 || nextIdx >= floors.length) return;
-      switchFloor(floors[nextIdx].floorId);
+    (dir: 'up' | 'down') => {
+      const idx = floors.findIndex((f) => f.floorId === selectedFloorRef.current);
+      const next = dir === 'up' ? idx + 1 : idx - 1;
+      if (next >= 0 && next < floors.length) setSelectedFloor(floors[next].floorId);
     },
-    [floors, selectedFloor, switchFloor]
+    [floors]
   );
+  const changeFloorRef = useRef(changeFloor);
+  useEffect(() => { changeFloorRef.current = changeFloor; }, [changeFloor]);
 
+  // ── 휠: 줌 + Shift→층 변경 ──────────────────────────────────────────────────
   useEffect(() => {
     const container = mapContainerRef.current;
     if (!container) return;
-    function handleWheel(e: WheelEvent) {
-      if (!e.shiftKey) return;
+    const handler = (e: WheelEvent) => {
       e.preventDefault();
-      changeFloor(e.deltaY < 0 ? 'up' : 'down');
-    }
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [changeFloor]);
+      if (e.shiftKey) { changeFloorRef.current(e.deltaY < 0 ? 'up' : 'down'); return; }
+      const rect = container.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const { zoom: z, pan: p } = zoomPanRef.current;
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      const nz = Math.min(Math.max(z * factor, 0.3), 10);
+      const wx = (mx - p.x) / z;
+      const wy = (my - p.y) / z;
+      setZoom(nz);
+      setPan({ x: mx - wx * nz, y: my - wy * nz });
+    };
+    container.addEventListener('wheel', handler, { passive: false });
+    return () => container.removeEventListener('wheel', handler);
+  }, [currentMap]);
 
+  // ── 드래그 패닝 ─────────────────────────────────────────────────────────────
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    dragRef.current = { active: true, startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y, moved: false };
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragRef.current.active) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragRef.current.moved = true;
+    setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy });
+  };
+
+  const handleMouseUp = () => { dragRef.current.active = false; setIsDragging(false); };
+
+  const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+
+  // ── 마커 클릭 ───────────────────────────────────────────────────────────────
   const handleMarkerClick = (marker: QuestMapMarker, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (dragRef.current.moved) return; // 드래그였으면 팝업 무시
     setPopup((prev) =>
-      prev?.marker.objectiveId === marker.objectiveId
-        ? null
-        : { marker, x: marker.positionX!, y: marker.positionY! }
+      prev?.marker.objectiveId === marker.objectiveId ? null : { marker }
     );
   };
 
+  // ── 퀘스트 패널 ─────────────────────────────────────────────────────────────
+  const toggleQuest = useCallback((questId: number) => {
+    setSelectedQuestIds((prev) => {
+      const next = new Set(prev);
+      next.has(questId) ? next.delete(questId) : next.add(questId);
+      return next;
+    });
+  }, []);
+
+  // ── 파생 값 ─────────────────────────────────────────────────────────────────
+  const isCompleted = (questId: number) => questStatuses[String(questId)] === 'COMPLETED';
+
+  const getFloorDistance = (floorId: string | null): number => {
+    if (!floorId || !selectedFloor) return 0;
+    const a = floors.findIndex((f) => f.floorId === floorId);
+    const b = floors.findIndex((f) => f.floorId === selectedFloor);
+    return a === -1 || b === -1 ? 0 : Math.abs(a - b);
+  };
+
+  const visibleMarkers = useMemo(
+    () =>
+      markers.filter((m) => {
+        if (m.positionX === null || m.positionY === null) return false;
+        if (hideCompleted && isCompleted(m.questId)) return false;
+        if (kappaOnly && !m.kappaRequired) return false;
+        if (selectedQuestIds.size > 0 && !selectedQuestIds.has(m.questId)) return false;
+        return true;
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [markers, hideCompleted, kappaOnly, selectedQuestIds, questStatuses]
+  );
+
+  // 팝업 위치: zoomable 레이어 밖, 화면 좌표로 변환
+  const popupScreenPos = useMemo(() => {
+    if (!popup || !svgBounds || !containerSize) return null;
+    const wx = svgBounds.left + (popup.marker.positionX! / 100) * svgBounds.width;
+    const wy = svgBounds.top + (popup.marker.positionY! / 100) * svgBounds.height;
+    const sx = pan.x + wx * zoom;
+    const sy = pan.y + wy * zoom;
+    const POPUP_W = 224;
+    return {
+      x: Math.min(Math.max(sx, POPUP_W / 2 + 8), containerSize.w - POPUP_W / 2 - 8),
+      y: sy,
+    };
+  }, [popup, svgBounds, pan, zoom, containerSize]);
+
+  // ── Loading / error ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-5rem)]">
@@ -198,95 +266,157 @@ export default function MapViewPage() {
     );
   }
 
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <DebugOverlay id="map-view-page" tag="div" label="MapViewPage" variant="feature">
       <div id="map-view-page" className="flex flex-col h-[calc(100vh-5rem)]">
 
         {/* Controls */}
-        <DebugOverlay id="map-controls" tag="div" label="MapControls" variant="component">
-          <div id="map-controls" className="bg-surface rounded-2xl p-4 mb-4 border border-border">
-            <div className="flex flex-wrap items-center gap-3">
-              <Link to="/map" className="text-text-muted hover:text-gold transition-colors">
-                <ChevronLeft size={18} />
-              </Link>
-              <h2 className="text-lg font-semibold text-text mr-2">{currentMap.name}</h2>
+        <div className="bg-surface rounded-2xl p-4 mb-4 border border-border">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to="/map" className="text-text-muted hover:text-gold transition-colors">
+              <ChevronLeft size={18} />
+            </Link>
+            <h2 className="text-lg font-semibold text-text mr-2">{currentMap.name}</h2>
 
-              <button
-                onClick={() => setHideCompleted(!hideCompleted)}
-                className={cn(
-                  'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
-                  hideCompleted ? 'bg-gold/20 text-gold' : 'bg-surface-alt text-text-secondary hover:text-text'
-                )}
-              >
-                {hideCompleted ? <EyeOff size={14} /> : <Eye size={14} />}
-                완료 숨기기
-              </button>
+            <button
+              onClick={() => setHideCompleted((v) => !v)}
+              className={cn(
+                'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
+                hideCompleted ? 'bg-gold/20 text-gold' : 'bg-surface-alt text-text-secondary hover:text-text'
+              )}
+            >
+              {hideCompleted ? <EyeOff size={14} /> : <Eye size={14} />}
+              완료 숨기기
+            </button>
 
-              <button
-                onClick={() => setKappaOnly(!kappaOnly)}
-                className={cn(
-                  'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
-                  kappaOnly ? 'bg-gold/20 text-gold' : 'bg-surface-alt text-text-secondary hover:text-gold'
-                )}
-              >
-                <Crown size={14} />
-                카파 전용
-              </button>
+            <button
+              onClick={() => setKappaOnly((v) => !v)}
+              className={cn(
+                'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
+                kappaOnly ? 'bg-gold/20 text-gold' : 'bg-surface-alt text-text-secondary hover:text-gold'
+              )}
+            >
+              <Crown size={14} />
+              카파 전용
+            </button>
 
-              <span className="text-xs text-text-muted ml-auto">
-                {visibleMarkers.length}개 마커
-              </span>
-            </div>
+            <button
+              onClick={() => setShowPanel((v) => !v)}
+              className={cn(
+                'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
+                showPanel ? 'bg-gold/20 text-gold' : 'bg-surface-alt text-text-secondary hover:text-text'
+              )}
+            >
+              <List size={14} />
+              퀘스트 목록
+            </button>
+
+            <span className="text-xs text-text-muted ml-auto">{visibleMarkers.length}개 마커</span>
           </div>
-        </DebugOverlay>
+        </div>
 
-        {/* Map container */}
-        <DebugOverlay id="map-container" tag="div" label="MapContainer" variant="component">
+        {/* Map + Panel row */}
+        <div className="flex flex-1 gap-4 min-h-0">
+
+          {/* Map container */}
           <div
             ref={mapContainerRef}
-            id="map-container"
-            className="flex-1 bg-surface rounded-2xl relative overflow-hidden border border-border"
-            onClick={() => setPopup(null)}
+            className="flex-1 bg-surface rounded-2xl relative overflow-hidden border border-border min-w-0 select-none"
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onClick={() => { if (!dragRef.current.moved) setPopup(null); }}
           >
-            {/* SVG 맵 렌더링 */}
-            {svgHtml ? (
-              <div
-                ref={svgRef}
-                className="absolute inset-0 [&_svg]:w-full [&_svg]:h-full [&_svg]:max-h-full"
-                dangerouslySetInnerHTML={svgHtml}
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <p className="text-6xl font-light text-elevated/20 select-none">{currentMap.name}</p>
-              </div>
-            )}
+            {/* Zoomable layer: SVG + markers */}
+            <div
+              className="absolute inset-0"
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transformOrigin: '0 0',
+              }}
+            >
+              {/* SVG */}
+              {svgHtml && (
+                <div
+                  ref={svgRef}
+                  className="absolute inset-0 [&_svg]:w-full [&_svg]:h-full [&_svg]:max-h-full"
+                  dangerouslySetInnerHTML={svgHtml}
+                />
+              )}
+              {!svgHtml && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <p className="text-6xl font-light text-elevated/20 select-none">{currentMap.name}</p>
+                </div>
+              )}
 
-            {/* Floor indicator (top-left) */}
+              {/* Markers — 모든 층 표시, 거리에 따라 블러 */}
+              {svgBounds && visibleMarkers.map((marker) => {
+                const dist = getFloorDistance(marker.floorId);
+                const ml = svgBounds.left + (marker.positionX! / 100) * svgBounds.width;
+                const mt = svgBounds.top + (marker.positionY! / 100) * svgBounds.height;
+                return (
+                  <div
+                    key={marker.objectiveId}
+                    className="absolute group cursor-pointer"
+                    style={{
+                      left: `${ml}px`,
+                      top: `${mt}px`,
+                      transform: 'translate(-50%, -50%)',
+                      opacity: dist === 0 ? 1 : dist === 1 ? 0.4 : 0.2,
+                      filter: dist > 0 ? `blur(${Math.min(dist, 2)}px)` : 'none',
+                      zIndex: dist === 0 ? 10 : 5,
+                      transition: 'opacity 0.3s, filter 0.3s',
+                    }}
+                    onClick={(e) => handleMarkerClick(marker, e)}
+                  >
+                    <div
+                      className={cn(
+                        'w-5 h-5 rounded-full flex items-center justify-center transition-transform group-hover:scale-125',
+                        isCompleted(marker.questId) ? 'bg-complete/80' : 'bg-gold'
+                      )}
+                      style={{
+                        boxShadow: isCompleted(marker.questId)
+                          ? '0 0 8px rgba(52,211,153,0.5)'
+                          : '0 0 8px rgba(230,184,0,0.5)',
+                      }}
+                    >
+                      <AlertCircle size={10} className="text-bg" />
+                    </div>
+                    {!popup && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                        <div className="bg-bg/90 backdrop-blur-sm text-text text-[10px] px-2 py-1 rounded-lg">
+                          {marker.questName}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 층 선택 (zoomable 레이어 밖) */}
             {floors.length > 1 && (
-              <div className="absolute top-4 left-4 bg-bg/80 backdrop-blur-sm rounded-xl px-3 py-2.5 z-10">
+              <div className="absolute top-4 left-4 bg-bg/80 backdrop-blur-sm rounded-xl px-3 py-2.5 z-20">
                 <p className="text-[10px] uppercase text-text-muted mb-1.5 tracking-wider">층</p>
                 <div className="flex flex-col items-center gap-1">
                   {floors.map((floor, idx) => (
                     <button
                       key={floor.floorId}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        switchFloor(floor.floorId);
-                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); switchFloor(floor.floorId); }}
                       className="flex items-center gap-2 w-full"
                     >
-                      <div
-                        className={cn(
-                          'w-2 h-2 rounded-full transition-all',
-                          idx === floorIndex ? 'bg-gold scale-125' : 'bg-elevated'
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          'text-xs transition-colors',
-                          idx === floorIndex ? 'text-gold font-semibold' : 'text-text-muted hover:text-text'
-                        )}
-                      >
+                      <div className={cn(
+                        'w-2 h-2 rounded-full transition-all',
+                        idx === floorIndex ? 'bg-gold scale-125' : 'bg-elevated'
+                      )} />
+                      <span className={cn(
+                        'text-xs transition-colors',
+                        idx === floorIndex ? 'text-gold font-semibold' : 'text-text-muted hover:text-text'
+                      )}>
                         {floor.floorLabel}
                       </span>
                     </button>
@@ -295,59 +425,40 @@ export default function MapViewPage() {
               </div>
             )}
 
-            {/* Markers */}
-            {visibleMarkers.map((marker) => (
-              <div
-                key={marker.objectiveId}
-                className="absolute group cursor-pointer z-10"
-                style={svgBounds ? {
-                  left: `${svgBounds.left + (marker.positionX! / 100) * svgBounds.width}px`,
-                  top: `${svgBounds.top + (marker.positionY! / 100) * svgBounds.height}px`,
-                  transform: 'translate(-50%, -50%)',
-                } : {
-                  left: `${marker.positionX}%`,
-                  top: `${marker.positionY}%`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-                onClick={(e) => handleMarkerClick(marker, e)}
+            {/* 줌 컨트롤 (bottom-right) */}
+            <div className="absolute bottom-4 right-4 flex flex-col gap-1 z-20">
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.min(z * 1.3, 10)); }}
+                className="w-8 h-8 bg-bg/80 backdrop-blur-sm rounded-lg flex items-center justify-center text-text-muted hover:text-text transition-colors"
               >
-                <div
-                  className={cn(
-                    'w-6 h-6 rounded-full flex items-center justify-center transition-transform group-hover:scale-125',
-                    isCompleted(marker.questId) ? 'bg-complete/80' : 'bg-gold'
-                  )}
-                  style={{
-                    boxShadow: isCompleted(marker.questId)
-                      ? '0 0 12px rgba(52,211,153,0.4)'
-                      : '0 0 12px rgba(230,184,0,0.4)',
-                  }}
-                >
-                  <AlertCircle size={12} className="text-bg" />
-                </div>
+                <ZoomIn size={14} />
+              </button>
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); resetView(); }}
+                title="뷰 초기화"
+                className="w-8 h-8 bg-bg/80 backdrop-blur-sm rounded-lg flex items-center justify-center text-text-muted hover:text-text transition-colors"
+              >
+                <RotateCcw size={12} />
+              </button>
+              <button
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setZoom((z) => Math.max(z / 1.3, 0.3)); }}
+                className="w-8 h-8 bg-bg/80 backdrop-blur-sm rounded-lg flex items-center justify-center text-text-muted hover:text-text transition-colors"
+              >
+                <ZoomOut size={14} />
+              </button>
+            </div>
 
-                {!popup && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                    <div className="bg-bg/90 backdrop-blur-sm text-text text-[10px] px-2 py-1 rounded-lg whitespace-nowrap">
-                      {marker.questName}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Marker popup */}
-            {popup && svgBounds && (
+            {/* 팝업 (zoomable 레이어 밖, 화면 좌표) */}
+            {popup && popupScreenPos && (
               <div
-                className="absolute z-20 pointer-events-none"
+                className="absolute z-30 pointer-events-none"
                 style={{
-                  left: `${Math.min(
-                    svgBounds.left + (popup.x / 100) * svgBounds.width,
-                    svgBounds.left + svgBounds.width - 224
-                  )}px`,
-                  top: `${Math.max(
-                    svgBounds.top + (popup.y / 100) * svgBounds.height - 20,
-                    svgBounds.top + 8
-                  )}px`,
+                  left: `${popupScreenPos.x}px`,
+                  top: `${popupScreenPos.y}px`,
+                  transform: 'translate(-50%, calc(-100% - 12px))',
                 }}
               >
                 <div className="pointer-events-auto bg-bg/95 backdrop-blur-md border border-border rounded-2xl p-4 w-56 shadow-xl">
@@ -360,7 +471,7 @@ export default function MapViewPage() {
                       {popup.marker.questName}
                     </Link>
                     {popup.marker.kappaRequired && (
-                      <Crown size={12} className="text-gold flex-shrink-0 mt-0.5" />
+                      <Crown size={12} className="text-gold shrink-0 mt-0.5" />
                     )}
                   </div>
                   <p className="text-xs text-text-secondary mb-2">{popup.marker.objectiveDescription}</p>
@@ -391,12 +502,23 @@ export default function MapViewPage() {
               </div>
             )}
 
-            {/* Shift+Scroll hint */}
-            <div className="absolute bottom-4 left-4 text-[10px] text-text-muted/50 z-10">
-              Shift + 스크롤로 층 변경
+            {/* 조작 힌트 */}
+            <div className="absolute bottom-4 left-4 text-[10px] text-text-muted/50 z-10 pointer-events-none">
+              휠 줌 · Shift+휠 층 변경 · 드래그 이동
             </div>
           </div>
-        </DebugOverlay>
+
+          {/* 우측 퀘스트 패널 */}
+          {showPanel && (
+            <MapQuestPanel
+              markers={markers}
+              selectedQuestIds={selectedQuestIds}
+              onToggleQuest={toggleQuest}
+              onClearSelection={() => setSelectedQuestIds(new Set())}
+              onClose={() => setShowPanel(false)}
+            />
+          )}
+        </div>
       </div>
     </DebugOverlay>
   );
