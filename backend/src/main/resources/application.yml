@@ -14,6 +14,7 @@ spring:
       enabled: true
       path: /h2-console
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.H2Dialect
@@ -32,7 +33,7 @@ tarkov:
   api:
     url: https://api.tarkov.dev/graphql
   sync:
-    cron: "0 0 */24 * * *"
+    cron: "0 0 3 1 * *"  # 매월 1일 03시 (게임 패치 시 POST /api/v1/admin/sync로 수동 트리거)
     enabled: true
 
 logging:

@@ -70,6 +70,8 @@ CREATE TABLE quests (
     wiki_link           VARCHAR(500),
     task_image_link     VARCHAR(500),
     experience          INT DEFAULT 0,
+    removed             BOOLEAN DEFAULT FALSE,           -- soft delete (API에서 사라진 퀘스트)
+    removed_at          TIMESTAMP,                       -- soft delete 시각
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -146,16 +148,20 @@ CREATE TABLE user_item_progress (
 
 ### 1.7 데이터 동기화 이력
 
+> **Phase 1 수정**: sync_history 테이블은 현 단계에서 제외.
+> 동기화 결과는 `logger.info/warn`으로 기록한다. 필요 시 후순위로 추가.
+
 ```sql
-CREATE TABLE sync_history (
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    sync_type   VARCHAR(50) NOT NULL,   -- "FULL", "QUESTS", "ITEMS", "MAPS"
-    status      VARCHAR(20) NOT NULL,   -- "SUCCESS", "FAILED"
-    item_count  INT DEFAULT 0,
-    error_msg   TEXT,
-    started_at  TIMESTAMP NOT NULL,
-    completed_at TIMESTAMP
-);
+-- (후순위) 관리자 대시보드 필요 시 추가
+-- CREATE TABLE sync_history (
+--     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+--     sync_type   VARCHAR(50) NOT NULL,
+--     status      VARCHAR(20) NOT NULL,
+--     item_count  INT DEFAULT 0,
+--     error_msg   TEXT,
+--     started_at  TIMESTAMP NOT NULL,
+--     completed_at TIMESTAMP
+-- );
 ```
 
 ---
@@ -187,10 +193,13 @@ CREATE TABLE sync_history (
 
 ### 2.4 아이템 API
 
+> **Phase 1 수정**: 아이템 독립 API는 현 단계에서 제외.
+> 아이템 정보는 퀘스트 상세(QuestDetail) 응답 내에 포함하여 제공한다.
+
 | Method | Endpoint | Query Params | Response | 설명 |
 |--------|----------|-------------|----------|------|
-| GET | `/api/v1/items` | `?search=keyword` | `Item[]` | 아이템 검색 |
-| GET | `/api/v1/items/{id}` | - | `ItemDetail` | 아이템 상세 |
+| GET | `/api/v1/items` | `?search=keyword` | `Item[]` | 아이템 검색 (후순위) |
+| GET | `/api/v1/items/{id}` | - | `ItemDetail` | 아이템 상세 (후순위) |
 
 ### 2.5 사용자 진행 상태 API (JWT 인증 필요)
 
@@ -206,7 +215,7 @@ CREATE TABLE sync_history (
 | Method | Endpoint | Response | 설명 |
 |--------|----------|----------|------|
 | POST | `/api/v1/admin/sync` | `SyncResult` | 수동 동기화 실행 |
-| GET | `/api/v1/admin/sync/history` | `SyncHistory[]` | 동기화 이력 |
+| GET | `/api/v1/admin/sync/history` | `SyncHistory[]` | 동기화 이력 (후순위) |
 
 ---
 
@@ -556,7 +565,7 @@ tarkov:
   api:
     url: https://api.tarkov.dev/graphql
   sync:
-    cron: "0 0 */24 * * *"  # 24시간마다
+    cron: "0 0 3 1 * *"  # 매월 1일 03시
     enabled: true
 
 logging:

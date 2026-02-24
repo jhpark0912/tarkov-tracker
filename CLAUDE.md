@@ -47,6 +47,14 @@ tarkov-quest-helper/
     └── architecure.md     # 아키텍쳐 구조 작성시, 반드시 참조할 파일
 ```
 
+### 설계 문서
+```
+docs/
+├── design.md          # DB 스키마, API 명세, DTO 구조, GraphQL 쿼리 상세
+├── phase1-plan.md     # Phase 1 구현 계획 (수정 사항, 동기화 정책, 유저 데이터 보호)
+└── architecture.md    # 아키텍처 구조 작성 시 참조
+```
+
 ### Backend 패키지 (`com.tarkov.helper`)
 도메인별 패키지 구조. 각 도메인 안에 controller, service, repository, entity, dto 배치.
 

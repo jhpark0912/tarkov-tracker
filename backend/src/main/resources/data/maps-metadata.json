@@ -1,0 +1,92 @@
+{
+  "customs": {
+    "svgFile": "customs.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
+  "factory": {
+    "svgFile": "factory.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
+  "woods": {
+    "svgFile": "woods.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
+  "shoreline": {
+    "svgFile": "shoreline.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
+  "interchange": {
+    "svgFile": "interchange.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Basement",     "floorLabel": "지하층",  "floorOrder": 0 },
+      { "floorId": "Ground_Level", "floorLabel": "1층",     "floorOrder": 1 },
+      { "floorId": "Second_Floor", "floorLabel": "2층",     "floorOrder": 2 }
+    ]
+  },
+  "reserve": {
+    "svgFile": "reserve.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Underground",  "floorLabel": "지하",   "floorOrder": 0 },
+      { "floorId": "Ground_Level", "floorLabel": "지상",   "floorOrder": 1 }
+    ]
+  },
+  "laboratory": {
+    "svgFile": "laboratory.svg",
+    "defaultFloor": "B1",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "B3", "floorLabel": "B3층", "floorOrder": 0 },
+      { "floorId": "B2", "floorLabel": "B2층", "floorOrder": 1 },
+      { "floorId": "B1", "floorLabel": "B1층", "floorOrder": 2 }
+    ]
+  },
+  "lighthouse": {
+    "svgFile": "lighthouse.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
+  "streets-of-tarkov": {
+    "svgFile": "streets-of-tarkov.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Basement",     "floorLabel": "지하",  "floorOrder": 0 },
+      { "floorId": "Ground_Level", "floorLabel": "1층",   "floorOrder": 1 },
+      { "floorId": "Second_Floor", "floorLabel": "2층",   "floorOrder": 2 },
+      { "floorId": "Third_Floor",  "floorLabel": "3층",   "floorOrder": 3 }
+    ]
+  },
+  "ground-zero": {
+    "svgFile": "ground-zero.svg",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Basement",     "floorLabel": "지하",  "floorOrder": 0 },
+      { "floorId": "Ground_Level", "floorLabel": "1층",   "floorOrder": 1 },
+      { "floorId": "Second_Floor", "floorLabel": "2층",   "floorOrder": 2 }
+    ]
+  }
+}
