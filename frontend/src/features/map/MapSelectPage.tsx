@@ -1,28 +1,53 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, ChevronRight } from 'lucide-react';
 import DebugOverlay from '../../components/debug/DebugOverlay';
-
-const sampleMaps = [
-  { name: 'Customs', normalizedName: 'customs', questCount: 35, completedCount: 12 },
-  { name: 'Interchange', normalizedName: 'interchange', questCount: 22, completedCount: 5 },
-  { name: 'Reserve', normalizedName: 'reserve', questCount: 18, completedCount: 4 },
-  { name: 'Woods', normalizedName: 'woods', questCount: 20, completedCount: 8 },
-  { name: 'Shoreline', normalizedName: 'shoreline', questCount: 25, completedCount: 6 },
-  { name: 'Factory', normalizedName: 'factory', questCount: 10, completedCount: 3 },
-  { name: 'The Lab', normalizedName: 'the-lab', questCount: 12, completedCount: 2 },
-  { name: 'Lighthouse', normalizedName: 'lighthouse', questCount: 15, completedCount: 3 },
-  { name: 'Streets of Tarkov', normalizedName: 'streets-of-tarkov', questCount: 20, completedCount: 2 },
-  { name: 'Ground Zero', normalizedName: 'ground-zero', questCount: 8, completedCount: 3 },
-];
+import { useMapStore } from '../../store/mapStore';
+import { useProgressStore } from '../../store/progressStore';
 
 export default function MapSelectPage() {
+  const { maps, loading, error, fetchMaps } = useMapStore();
+  const { summary } = useProgressStore();
+
+  useEffect(() => {
+    fetchMaps();
+  }, [fetchMaps]);
+
+  // byMap 진행률 매칭 (mapName 대소문자 비교)
+  const getMapProgress = (mapName: string) => {
+    if (!summary?.byMap) return null;
+    return summary.byMap.find(
+      (m) => m.mapName.toLowerCase() === mapName.toLowerCase()
+    ) ?? null;
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <p className="text-text-muted text-sm">맵 목록 로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <p className="text-incomplete text-sm">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <DebugOverlay id="map-select-page" tag="div" label="MapSelectPage" variant="feature">
       <div id="map-select-page" className="max-w-7xl mx-auto space-y-6">
         <DebugOverlay id="map-grid" tag="div" label="MapGrid" variant="component">
           <div id="map-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {sampleMaps.map((map) => {
-              const pct = ((map.completedCount / map.questCount) * 100).toFixed(0);
+            {maps.map((map) => {
+              const prog = getMapProgress(map.name);
+              const questCount = prog?.total ?? 0;
+              const completedCount = prog?.completed ?? 0;
+              const pct = prog ? prog.percent.toFixed(0) : '0';
+
               return (
                 <Link
                   key={map.normalizedName}
@@ -36,7 +61,7 @@ export default function MapSelectPage() {
                     </div>
                     <div className="absolute top-3 right-3 flex items-center gap-1 bg-bg/60 backdrop-blur-sm rounded-lg px-2 py-1">
                       <MapPin size={12} className="text-gold" />
-                      <span className="text-[10px] text-text-secondary">{map.questCount}</span>
+                      <span className="text-[10px] text-text-secondary">{questCount}</span>
                     </div>
                   </div>
 
@@ -56,7 +81,7 @@ export default function MapSelectPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] uppercase text-text-muted">{pct}% 완료</span>
-                      <span className="text-[10px] text-text-secondary">{map.completedCount}/{map.questCount}</span>
+                      <span className="text-[10px] text-text-secondary">{completedCount}/{questCount}</span>
                     </div>
                   </div>
                 </Link>

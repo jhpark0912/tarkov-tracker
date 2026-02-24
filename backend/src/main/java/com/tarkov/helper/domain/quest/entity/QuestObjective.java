@@ -59,6 +59,12 @@ public class QuestObjective {
         this.optional = optional;
     }
 
+    public void updatePosition(Double positionX, Double positionY, String floorId) {
+        this.positionX = positionX;
+        this.positionY = positionY;
+        this.floorId = floorId;
+    }
+
     public void clearRequiredItems() {
         this.requiredItems.clear();
     }

@@ -9,10 +9,13 @@
   },
   "factory": {
     "svgFile": "factory.svg",
-    "defaultFloor": "Ground_Level",
+    "defaultFloor": "Ground_Floor",
     "coordinateRotation": 0,
     "floors": [
-      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+      { "floorId": "Basement",     "floorLabel": "지하",  "floorOrder": 0 },
+      { "floorId": "Ground_Floor", "floorLabel": "지상",  "floorOrder": 1 },
+      { "floorId": "Second_Floor", "floorLabel": "2층",   "floorOrder": 2 },
+      { "floorId": "Third_Floor",  "floorLabel": "3층",   "floorOrder": 3 }
     ]
   },
   "woods": {
@@ -36,9 +39,9 @@
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 0,
     "floors": [
-      { "floorId": "Basement",     "floorLabel": "지하층",  "floorOrder": 0 },
-      { "floorId": "Ground_Level", "floorLabel": "1층",     "floorOrder": 1 },
-      { "floorId": "Second_Floor", "floorLabel": "2층",     "floorOrder": 2 }
+      { "floorId": "Ground_Level", "floorLabel": "1층", "floorOrder": 0 },
+      { "floorId": "First_Floor",  "floorLabel": "2층", "floorOrder": 1 },
+      { "floorId": "Second_Floor", "floorLabel": "3층", "floorOrder": 2 }
     ]
   },
   "reserve": {
@@ -46,18 +49,17 @@
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 0,
     "floors": [
-      { "floorId": "Underground",  "floorLabel": "지하",   "floorOrder": 0 },
-      { "floorId": "Ground_Level", "floorLabel": "지상",   "floorOrder": 1 }
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
     ]
   },
   "laboratory": {
     "svgFile": "laboratory.svg",
-    "defaultFloor": "B1",
+    "defaultFloor": "Technical_Level",
     "coordinateRotation": 0,
     "floors": [
-      { "floorId": "B3", "floorLabel": "B3층", "floorOrder": 0 },
-      { "floorId": "B2", "floorLabel": "B2층", "floorOrder": 1 },
-      { "floorId": "B1", "floorLabel": "B1층", "floorOrder": 2 }
+      { "floorId": "Technical_Level", "floorLabel": "기술층", "floorOrder": 0 },
+      { "floorId": "First_Level",     "floorLabel": "B2층",   "floorOrder": 1 },
+      { "floorId": "Second_Level",    "floorLabel": "B1층",   "floorOrder": 2 }
     ]
   },
   "lighthouse": {
@@ -73,10 +75,7 @@
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 0,
     "floors": [
-      { "floorId": "Basement",     "floorLabel": "지하",  "floorOrder": 0 },
-      { "floorId": "Ground_Level", "floorLabel": "1층",   "floorOrder": 1 },
-      { "floorId": "Second_Floor", "floorLabel": "2층",   "floorOrder": 2 },
-      { "floorId": "Third_Floor",  "floorLabel": "3층",   "floorOrder": 3 }
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
     ]
   },
   "ground-zero": {
@@ -84,9 +83,11 @@
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 0,
     "floors": [
-      { "floorId": "Basement",     "floorLabel": "지하",  "floorOrder": 0 },
-      { "floorId": "Ground_Level", "floorLabel": "1층",   "floorOrder": 1 },
-      { "floorId": "Second_Floor", "floorLabel": "2층",   "floorOrder": 2 }
+      { "floorId": "Underground_Level", "floorLabel": "지하",  "floorOrder": 0 },
+      { "floorId": "Ground_Level",      "floorLabel": "1층",   "floorOrder": 1 },
+      { "floorId": "First_Floor",       "floorLabel": "2층",   "floorOrder": 2 },
+      { "floorId": "Second_Floor",      "floorLabel": "3층",   "floorOrder": 3 },
+      { "floorId": "Third_Floor",       "floorLabel": "4층",   "floorOrder": 4 }
     ]
   }
 }

@@ -70,7 +70,8 @@ public class DataSyncService {
         syncQuestPrerequisites(tasks, questCache);
 
         // 6. 퀘스트 목표 + 목표 아이템 동기화
-        syncQuestObjectives(tasks, questCache, mapCache, itemCache);
+        Map<String, GpsData> gpsCache = loadObjectiveGps();
+        syncQuestObjectives(tasks, questCache, mapCache, itemCache, gpsCache);
 
         // 7. 삭제된 퀘스트 soft delete
         Set<String> apiQuestIds = tasks.stream().map(TarkovTaskDto::getId).collect(Collectors.toSet());
@@ -293,7 +294,8 @@ public class DataSyncService {
     private void syncQuestObjectives(List<TarkovTaskDto> tasks,
                                      Map<String, Quest> questCache,
                                      Map<String, GameMap> mapCache,
-                                     Map<String, Item> itemCache) {
+                                     Map<String, Item> itemCache,
+                                     Map<String, GpsData> gpsCache) {
         for (TarkovTaskDto dto : tasks) {
             Quest quest = questCache.get(dto.getId());
             if (quest == null || dto.getObjectives() == null) continue;
@@ -302,6 +304,7 @@ public class DataSyncService {
                 if (objDto.getId() == null) continue;
 
                 GameMap objMap = resolveObjectiveMap(objDto, mapCache);
+                GpsData gps = gpsCache.get(objDto.getId());
 
                 QuestObjective objective = questObjectiveRepository.findByApiId(objDto.getId()).orElse(null);
                 if (objective == null) {
@@ -321,6 +324,11 @@ public class DataSyncService {
                             objMap,
                             Boolean.TRUE.equals(objDto.getOptional())
                     );
+                }
+
+                // GPS 좌표 업데이트
+                if (gps != null) {
+                    objective.updatePosition(gps.leftPercent(), gps.topPercent(), gps.floor());
                 }
 
                 // 아이템 목록 재동기화
@@ -402,6 +410,17 @@ public class DataSyncService {
         }
     }
 
+    private Map<String, GpsData> loadObjectiveGps() {
+        try {
+            ClassPathResource resource = new ClassPathResource("data/objective_gps.json");
+            return objectMapper.readValue(resource.getInputStream(),
+                    new TypeReference<Map<String, GpsData>>() {});
+        } catch (IOException e) {
+            log.warn("objective_gps.json 로딩 실패. 좌표 없이 진행합니다: {}", e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
     // ─── 내부 메타데이터 레코드 ───────────────────────────────────────────────
 
     record MapMetadata(String svgFile, String defaultFloor, Integer coordinateRotation,
@@ -412,4 +431,6 @@ public class DataSyncService {
     }
 
     record FloorMetadata(String floorId, String floorLabel, Integer floorOrder) {}
+
+    record GpsData(String map, Double leftPercent, Double topPercent, String floor) {}
 }
