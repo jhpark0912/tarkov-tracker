@@ -122,6 +122,10 @@ public class DataSyncService {
         GameMap map = gameMapRepository.findByApiId(apiId).orElse(null);
         MapMetadata meta = metadata.getOrDefault(normalizedName, new MapMetadata());
 
+        if (meta.svgFile() == null) {
+            log.warn("maps-metadata.json에 '{}' 항목 없음 — SVG/층 정보 미적용. 신규 맵이면 메타데이터를 추가하세요.", normalizedName);
+        }
+
         if (map == null) {
             map = gameMapRepository.save(GameMap.builder()
                     .apiId(apiId)
@@ -402,8 +406,17 @@ public class DataSyncService {
     private Map<String, MapMetadata> loadMapMetadata() {
         try {
             ClassPathResource resource = new ClassPathResource("data/maps-metadata.json");
-            return objectMapper.readValue(resource.getInputStream(),
+            Map<String, MapMetadata> raw = objectMapper.readValue(resource.getInputStream(),
                     new TypeReference<Map<String, MapMetadata>>() {});
+
+            // aliases 전개: alias로 조회해도 동일 메타데이터 반환
+            Map<String, MapMetadata> expanded = new HashMap<>(raw);
+            raw.forEach((key, meta) -> {
+                if (meta.aliases() != null) {
+                    meta.aliases().forEach(alias -> expanded.put(alias, meta));
+                }
+            });
+            return expanded;
         } catch (IOException e) {
             log.warn("maps-metadata.json 로딩 실패. 층 데이터 없이 진행합니다: {}", e.getMessage());
             return Collections.emptyMap();
@@ -424,9 +437,9 @@ public class DataSyncService {
     // ─── 내부 메타데이터 레코드 ───────────────────────────────────────────────
 
     record MapMetadata(String svgFile, String defaultFloor, Integer coordinateRotation,
-                       List<FloorMetadata> floors) {
+                       List<FloorMetadata> floors, List<String> aliases) {
         MapMetadata() {
-            this(null, null, 0, List.of());
+            this(null, null, 0, List.of(), List.of());
         }
     }
 

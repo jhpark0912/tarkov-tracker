@@ -8,6 +8,7 @@
     ]
   },
   "factory": {
+    "aliases": ["night-factory"],
     "svgFile": "factory.svg",
     "defaultFloor": "Ground_Floor",
     "coordinateRotation": 0,
@@ -52,7 +53,7 @@
       { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
     ]
   },
-  "laboratory": {
+  "the-lab": {
     "svgFile": "laboratory.svg",
     "defaultFloor": "Technical_Level",
     "coordinateRotation": 0,
@@ -79,6 +80,7 @@
     ]
   },
   "ground-zero": {
+    "aliases": ["ground-zero-21"],
     "svgFile": "ground-zero.svg",
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 0,

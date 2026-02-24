@@ -20,7 +20,6 @@ public interface QuestObjectiveRepository extends JpaRepository<QuestObjective, 
             "LEFT JOIN FETCH o.quest q " +
             "LEFT JOIN FETCH q.trader " +
             "WHERE o.map.id = :mapId " +
-            "AND (o.positionX IS NOT NULL OR o.positionY IS NOT NULL) " +
             "AND q.removed = false")
     List<QuestObjective> findMapMarkersForMap(@Param("mapId") Long mapId);
 }
