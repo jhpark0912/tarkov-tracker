@@ -1,9 +1,9 @@
 # Tarkov Quest Helper — 진행 상태
 
-## 최근 커밋 (dev 브랜치, push 완료)
-- (Phase 2 커밋 예정)
-- `9823d16` :sparkles: [feat] Phase 1 - 핵심 도메인 + tarkov.dev 데이터 동기화 구현
-- `60f6560` :sparkles: [feat] JWT 기반 회원가입/로그인 인증 시스템 구현
+## 최근 커밋 (dev 브랜치)
+- `856d2ce` :sparkles: [feat] 맵 뷰 - 줌/패닝, 퀘스트 패널, 층 거리 블러 구현
+- `8fc3173` :sparkles: [feat] Phase 3 - 맵 뷰 실데이터 연동 + SVG 렌더링 + 퀘스트 마커 오버레이
+- `4f6b362` :sparkles: [feat] Phase 2 - Progress 도메인 + 퀘스트 UI 실데이터 연동
 
 ---
 
@@ -32,6 +32,7 @@
 - SyncScheduler — 매월 1일 03시 (cron: "0 0 3 1 * *")
 - SyncController — POST /api/v1/admin/sync (JWT 인증 필요)
 - Sync DTOs 9개 (TarkovApiResponse, TarkovTaskDto, TarkovObjectiveDto 등)
+- objective_gps.json (TarkovTracker/tarkovdata) — 목표 좌표 동기화 소스
 
 **REST API**
 - GET /api/v1/quests?trader=&kappa=&map= — 퀘스트 목록 필터
@@ -43,7 +44,7 @@
 
 **설정**
 - WebClientConfig (16MB 버퍼)
-- maps-metadata.json (10개 맵 층 정보)
+- maps-metadata.json (10개 맵, 실제 SVG <g> 그룹 ID 기준 floorId)
 - @EnableScheduling, open-in-view: false
 
 **검증 결과**
@@ -74,14 +75,42 @@
 
 ---
 
-## 다음 단계: Phase 3
+### Phase 3 — 맵 뷰 (완료)
 
-### 구현 예정 항목
-1. **맵 뷰 (MapViewPage)** — SVG 맵 렌더링, 층별 토글, 퀘스트 마커 오버레이 (react-leaflet 또는 SVG 직접 조작)
-2. **맵 API 연동** — GET /api/v1/quests/map/{mapId}?floor= 마커 데이터 사용
-3. **아이템 검색 API** (후순위) — GET /api/v1/items?search=
-4. **관리자 기능** — 동기화 이력 UI
+**Backend**
+- QuestObjective.updatePosition() — GPS 좌표 저장 메서드
+- DataSyncService — objective_gps.json 로딩 + syncQuestObjectives에 좌표 저장 (GpsData record)
 
-### 설계 참조
-- `docs/design.md` 섹션 2.3 (맵 API), 5 (SVG 맵 구조)
-- `docs/architecture.md` 맵 컴포넌트 설계
+**Frontend — 맵 타입/API/스토어**
+- types/map.ts — MapFloorInfo, MapListItem, MapDetail, QuestMapMarker, MarkerItemDto
+- api/mapApi.ts — getMapList, getMapDetail(normalizedName), getMapMarkers(mapId, floor?)
+- store/mapStore.ts — maps, currentMap, markers, loading, error / fetchMaps, fetchMapDetail, fetchMarkers, clearCurrentMap
+
+**Frontend — 맵 페이지 기능**
+- MapSelectPage.tsx — /api/v1/maps 연동, byMap 완료율 표시
+- MapViewPage.tsx — SVG 인라인 렌더링 + 마커 오버레이
+  - SVG viewBox 파싱 + ResizeObserver(containerSize) → svgBounds letterbox 보정으로 마커 정확도
+  - 층별 `<g>` 그룹 opacity/filter transition (defaultFloor 블러 배경)
+  - 마우스 휠 줌 (커서 기준, 0.3x~10x) + 드래그 패닝 + 버튼 컨트롤
+  - Shift+휠 층 변경 유지
+  - 팝업: zoomable 레이어 밖 화면 좌표 변환 → 줌 무관 고정 크기
+  - 층 거리 블러: 같은층=선명 / 1층차=0.4투명+blur(1px) / 2+층=0.2+blur(2px)
+  - MapQuestPanel: 퀘스트 다중 선택, 카파 필터, 선택 초기화, 패널 토글
+- MapQuestPanel.tsx (features/map/components/) — 우측 퀘스트 목록 패널
+
+**SVG 맵**
+- public/maps/ — 10개 맵 SVG (TarkovTracker/tarkovdata)
+- maps-metadata.json — 실제 SVG `<g>` 그룹 ID 기준으로 floorId 교정
+
+**핵심 버그 수정**
+- dangerouslySetInnerHTML useMemo 안정화 (innerHTML 재설정 방지)
+- ResizeObserver [currentMap] 의존성 (loading 시 ref null → containerSize 미설정 버그)
+- svgBounds letterbox 보정 (마커 좌표 컨테이너 기준 → SVG 실제 렌더링 영역 기준)
+
+---
+
+## 다음 단계
+
+1. **아이템 검색 API** — GET /api/v1/items?search=
+2. **관리자 기능** — 동기화 이력 UI
+3. **기타 UX 개선** — 사용자 피드백 기반
