@@ -1,8 +1,36 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Crosshair, Mail, Lock, User } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 
 export default function SignupPage() {
+  const navigate = useNavigate();
+  const signup = useAuthStore((s) => s.signup);
+
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await signup(username, email, password);
+      navigate('/');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        '회원가입에 실패했습니다';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <DebugOverlay id="signup-page" tag="div" label="SignupPage" variant="feature">
       <div id="signup-page" className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
@@ -18,7 +46,12 @@ export default function SignupPage() {
 
           {/* Form */}
           <div className="bg-surface rounded-2xl p-6 border border-border">
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+            {error && (
+              <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs uppercase text-text-muted mb-2 tracking-wider">
                   사용자 이름
@@ -28,7 +61,10 @@ export default function SignupPage() {
                   <input
                     id="signup-username"
                     type="text"
-                    placeholder="Choose a username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="사용자 이름을 입력하세요"
+                    required
                     className="bg-transparent border-none outline-none text-sm text-text placeholder:text-text-muted w-full"
                   />
                 </div>
@@ -43,7 +79,10 @@ export default function SignupPage() {
                   <input
                     id="signup-email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
+                    required
                     className="bg-transparent border-none outline-none text-sm text-text placeholder:text-text-muted w-full"
                   />
                 </div>
@@ -58,7 +97,10 @@ export default function SignupPage() {
                   <input
                     id="signup-password"
                     type="password"
-                    placeholder="Choose a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="비밀번호를 입력하세요 (6자 이상)"
+                    required
                     className="bg-transparent border-none outline-none text-sm text-text placeholder:text-text-muted w-full"
                   />
                 </div>
@@ -67,9 +109,10 @@ export default function SignupPage() {
               <button
                 id="signup-submit"
                 type="submit"
-                className="w-full py-3 rounded-xl text-sm font-semibold bg-gold text-bg hover:bg-gold-dim transition-colors cursor-pointer"
+                disabled={loading}
+                className="w-full py-3 rounded-xl text-sm font-semibold bg-gold text-bg hover:bg-gold-dim transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                계정 만들기
+                {loading ? '가입 중...' : '계정 만들기'}
               </button>
             </form>
           </div>

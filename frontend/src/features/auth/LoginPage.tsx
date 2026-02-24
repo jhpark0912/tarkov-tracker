@@ -1,8 +1,35 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Crosshair, Mail, Lock } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await login(email, password);
+      navigate('/');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        '로그인에 실패했습니다';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <DebugOverlay id="login-page" tag="div" label="LoginPage" variant="feature">
       <div id="login-page" className="flex items-center justify-center min-h-[calc(100vh-5rem)]">
@@ -18,7 +45,12 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="bg-surface rounded-2xl p-6 border border-border">
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+            {error && (
+              <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs uppercase text-text-muted mb-2 tracking-wider">
                   이메일
@@ -28,7 +60,10 @@ export default function LoginPage() {
                   <input
                     id="login-email"
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="이메일을 입력하세요"
+                    required
                     className="bg-transparent border-none outline-none text-sm text-text placeholder:text-text-muted w-full"
                   />
                 </div>
@@ -43,7 +78,10 @@ export default function LoginPage() {
                   <input
                     id="login-password"
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="비밀번호를 입력하세요"
+                    required
                     className="bg-transparent border-none outline-none text-sm text-text placeholder:text-text-muted w-full"
                   />
                 </div>
@@ -52,9 +90,10 @@ export default function LoginPage() {
               <button
                 id="login-submit"
                 type="submit"
-                className="w-full py-3 rounded-xl text-sm font-semibold bg-gold text-bg hover:bg-gold-dim transition-colors cursor-pointer"
+                disabled={loading}
+                className="w-full py-3 rounded-xl text-sm font-semibold bg-gold text-bg hover:bg-gold-dim transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                로그인
+                {loading ? '로그인 중...' : '로그인'}
               </button>
             </form>
           </div>

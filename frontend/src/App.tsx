@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import DebugProvider from './components/debug/DebugProvider';
 import DebugToggle from './components/debug/DebugToggle';
 import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import { useAuthStore } from './store/authStore';
 import DashboardPage from './features/dashboard/DashboardPage';
 import QuestListPage from './features/quests/QuestListPage';
 import QuestDetailPage from './features/quests/QuestDetailPage';
@@ -11,6 +14,12 @@ import LoginPage from './features/auth/LoginPage';
 import SignupPage from './features/auth/SignupPage';
 
 export default function App() {
+  const initFromStorage = useAuthStore((s) => s.initFromStorage);
+
+  useEffect(() => {
+    initFromStorage();
+  }, [initFromStorage]);
+
   return (
     <DebugProvider>
       <Routes>
@@ -22,6 +31,14 @@ export default function App() {
           <Route path="/map/:normalizedName" element={<MapViewPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/progress"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
       <DebugToggle />
