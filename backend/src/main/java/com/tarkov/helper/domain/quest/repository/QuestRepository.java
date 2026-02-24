@@ -13,6 +13,7 @@ public interface QuestRepository extends JpaRepository<Quest, Long> {
 
     Optional<Quest> findByApiId(String apiId);
 
+    @Query("SELECT DISTINCT q FROM Quest q LEFT JOIN FETCH q.trader LEFT JOIN FETCH q.map WHERE q.removed = false")
     List<Quest> findByRemovedFalse();
 
     long countByRemovedFalse();

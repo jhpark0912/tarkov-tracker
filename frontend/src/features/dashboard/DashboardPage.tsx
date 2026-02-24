@@ -1,35 +1,16 @@
+import { useEffect } from 'react';
 import {
   Zap,
   Target,
   MapPin,
   Crown,
   ChevronUp,
-  ChevronDown,
 } from 'lucide-react';
 import * as Progress from '@radix-ui/react-progress';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
-
-const traderProgress = [
-  { name: 'Prapor', total: 28, completed: 8, trend: 'up' as const },
-  { name: 'Therapist', total: 22, completed: 6, trend: 'up' as const },
-  { name: 'Skier', total: 24, completed: 5, trend: 'down' as const },
-  { name: 'Peacekeeper', total: 18, completed: 3, trend: 'up' as const },
-  { name: 'Mechanic', total: 20, completed: 7, trend: 'up' as const },
-  { name: 'Ragman', total: 16, completed: 4, trend: 'down' as const },
-  { name: 'Jaeger', total: 32, completed: 6, trend: 'up' as const },
-  { name: 'Fence', total: 6, completed: 2, trend: 'up' as const },
-  { name: 'Lightkeeper', total: 8, completed: 1, trend: 'down' as const },
-];
-
-const mapProgress = [
-  { name: 'Customs', quests: 35, completed: 12 },
-  { name: 'Interchange', quests: 22, completed: 5 },
-  { name: 'Reserve', quests: 18, completed: 4 },
-  { name: 'Woods', quests: 20, completed: 8 },
-  { name: 'Shoreline', quests: 25, completed: 6 },
-  { name: 'Factory', quests: 10, completed: 3 },
-];
+import { useProgressStore } from '../../store/progressStore';
+import { useAuthStore } from '../../store/authStore';
 
 function ProgressBar({ value, max, color = 'bg-complete' }: { value: number; max: number; color?: string }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
@@ -71,12 +52,23 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-  const totalQuests = 200;
-  const completedQuests = 45;
-  const kappaTotal = 140;
-  const kappaCompleted = 30;
-  const totalPct = ((completedQuests / totalQuests) * 100).toFixed(1);
-  const kappaPct = ((kappaCompleted / kappaTotal) * 100).toFixed(1);
+  const { summary, fetchSummary } = useProgressStore();
+  const { token } = useAuthStore();
+
+  useEffect(() => {
+    if (token) fetchSummary();
+  }, [token, fetchSummary]);
+
+  const totalQuests = summary?.totalQuests ?? 0;
+  const completedQuests = summary?.completedQuests ?? 0;
+  const kappaTotal = summary?.kappaQuests.total ?? 0;
+  const kappaCompleted = summary?.kappaQuests.completed ?? 0;
+  const totalPct = (summary?.totalProgressPercent ?? 0).toFixed(1);
+  const kappaPct = (summary?.kappaQuests.percent ?? 0).toFixed(1);
+  const traderProgress = summary?.byTrader ?? [];
+  const mapProgress = summary?.byMap ?? [];
+  const { questStatuses } = useProgressStore();
+  const inProgressCount = Object.values(questStatuses).filter(s => s === 'IN_PROGRESS').length;
 
   return (
     <DebugOverlay id="dashboard-page" tag="div" label="DashboardPage" variant="feature">
@@ -101,9 +93,9 @@ export default function DashboardPage() {
             />
             <StatCard
               icon={Zap}
-              label="이번 주"
-              value="+12"
-              sub="퀘스트 완료"
+              label="진행 중"
+              value={String(inProgressCount)}
+              sub="퀘스트 진행 중"
               color="bg-progress/20 text-progress"
             />
             <StatCard
@@ -150,11 +142,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">진행 중</span>
-                  <span className="text-sm font-medium text-progress">18</span>
+                  <span className="text-sm font-medium text-progress">{inProgressCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">미시작</span>
-                  <span className="text-sm font-medium text-text-muted">{totalQuests - completedQuests - 18}</span>
+                  <span className="text-sm font-medium text-text-muted">{Math.max(0, totalQuests - completedQuests - inProgressCount)}</span>
                 </div>
               </div>
             </div>
@@ -174,32 +166,29 @@ export default function DashboardPage() {
               </div>
 
               <div className="space-y-4">
-                {traderProgress.map((trader) => {
-                  const pct = ((trader.completed / trader.total) * 100).toFixed(0);
-                  return (
-                    <div key={trader.name} className="flex items-center gap-4">
-                      <div className="w-9 h-9 rounded-xl bg-surface-alt flex items-center justify-center text-text-secondary text-xs font-semibold flex-shrink-0">
-                        {trader.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-sm text-text">{trader.name}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-text-muted">{trader.completed}/{trader.total}</span>
-                            <span className={cn(
-                              'flex items-center text-[10px]',
-                              trader.trend === 'up' ? 'text-complete' : 'text-incomplete'
-                            )}>
-                              {trader.trend === 'up' ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                              {pct}%
-                            </span>
-                          </div>
-                        </div>
-                        <ProgressBar value={trader.completed} max={trader.total} />
-                      </div>
+                {traderProgress.length === 0 && (
+                  <p className="text-xs text-text-muted text-center py-4">로그인 후 진행 상태를 확인하세요.</p>
+                )}
+                {traderProgress.map((trader) => (
+                  <div key={trader.traderName} className="flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-xl bg-surface-alt flex items-center justify-center text-text-secondary text-xs font-semibold flex-shrink-0">
+                      {trader.traderName.charAt(0)}
                     </div>
-                  );
-                })}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-text">{trader.traderName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-text-muted">{trader.completed}/{trader.total}</span>
+                          <span className="flex items-center text-[10px] text-complete">
+                            <ChevronUp size={12} />
+                            {trader.percent.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                      <ProgressBar value={trader.completed} max={trader.total} />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </DebugOverlay>
@@ -219,25 +208,22 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mapProgress.map((m) => {
-                const pct = ((m.completed / m.quests) * 100).toFixed(0);
-                return (
-                  <div
-                    key={m.name}
-                    className="bg-surface-alt rounded-xl p-4 hover:bg-elevated/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-text">{m.name}</span>
-                      <span className="text-xs text-text-muted">{pct}%</span>
-                    </div>
-                    <ProgressBar value={m.completed} max={m.quests} color="bg-progress" />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-[10px] uppercase text-text-muted">{m.quests} quests</span>
-                      <span className="text-xs text-text-secondary">{m.completed} done</span>
-                    </div>
+              {mapProgress.length === 0 && (
+                <p className="text-xs text-text-muted py-4 col-span-3 text-center">로그인 후 진행 상태를 확인하세요.</p>
+              )}
+              {mapProgress.map((m) => (
+                <div key={m.mapName} className="bg-surface-alt rounded-xl p-4 hover:bg-elevated/50 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-text">{m.mapName}</span>
+                    <span className="text-xs text-text-muted">{m.percent.toFixed(0)}%</span>
                   </div>
-                );
-              })}
+                  <ProgressBar value={m.completed} max={m.total} color="bg-progress" />
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[10px] uppercase text-text-muted">{m.total} quests</span>
+                    <span className="text-xs text-text-secondary">{m.completed} done</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </DebugOverlay>
