@@ -7,10 +7,15 @@ import {
   LogIn,
   X,
   MapPin,
+  RefreshCw,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../debug/DebugOverlay';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import { useAuthStore } from '../../store/authStore';
+import { adminApi, type SyncResult } from '../../api/adminApi';
 
 const navItems = [
   { icon: LayoutDashboard, label: '대시보드', path: '/' },
@@ -114,10 +119,130 @@ function MapToggleButton({
   );
 }
 
+type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
+
+function SyncButton() {
+  const [status, setStatus] = useState<SyncStatus>('idle');
+  const [result, setResult] = useState<SyncResult | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [showResult, setShowResult] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (resultRef.current && !resultRef.current.contains(e.target as Node)) {
+        setShowResult(false);
+      }
+    }
+    if (showResult) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showResult]);
+
+  const handleSync = async () => {
+    if (status === 'syncing') return;
+    setStatus('syncing');
+    setResult(null);
+    setErrorMsg('');
+    try {
+      const data = await adminApi.triggerSync();
+      setResult(data);
+      setStatus('success');
+      setShowResult(true);
+      setTimeout(() => setStatus('idle'), 5000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '동기화 실패';
+      setErrorMsg(msg);
+      setStatus('error');
+      setShowResult(true);
+      setTimeout(() => setStatus('idle'), 5000);
+    }
+  };
+
+  const icon =
+    status === 'syncing' ? RefreshCw :
+    status === 'success' ? Check :
+    status === 'error' ? AlertCircle : RefreshCw;
+
+  const colorClass =
+    status === 'syncing' ? 'text-gold animate-spin' :
+    status === 'success' ? 'text-success' :
+    status === 'error' ? 'text-danger' :
+    'text-text-secondary hover:text-text hover:bg-surface-alt';
+
+  return (
+    <div className="relative">
+      <Tooltip.Provider delayDuration={200}>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <button
+              onClick={handleSync}
+              disabled={status === 'syncing'}
+              className={cn(
+                'w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 flex-shrink-0 cursor-pointer',
+                colorClass
+              )}
+            >
+              {(() => { const Icon = icon; return <Icon size={20} strokeWidth={1.5} />; })()}
+            </button>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="right"
+              sideOffset={12}
+              className="px-3 py-1.5 text-xs font-medium text-text bg-surface-alt rounded-lg shadow-lg z-[9999]"
+            >
+              {status === 'syncing' ? '동기화 중...' : '데이터 동기화'}
+              <Tooltip.Arrow className="fill-surface-alt" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
+
+      {showResult && (
+        <div
+          ref={resultRef}
+          className="fixed left-16 bottom-4 w-72 bg-surface border border-border rounded-xl shadow-lg z-50 p-4"
+        >
+          {status === 'error' ? (
+            <div className="text-danger text-sm">
+              <p className="font-semibold mb-1">동기화 실패</p>
+              <p className="text-text-muted text-xs">{errorMsg}</p>
+            </div>
+          ) : result ? (
+            <div className="text-sm">
+              <p className="font-semibold text-success mb-2">동기화 완료</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-text-secondary">
+                <span>딜러</span><span className="text-text">{result.tradersProcessed}</span>
+                <span>맵</span><span className="text-text">{result.mapsProcessed}</span>
+                <span>아이템</span><span className="text-text">{result.itemsProcessed}</span>
+                <span>퀘스트 추가</span><span className="text-text">{result.questsAdded}</span>
+                <span>퀘스트 갱신</span><span className="text-text">{result.questsUpdated}</span>
+                <span>탈출구</span><span className="text-text">{result.extractsProcessed}</span>
+                <span>잠금</span><span className="text-text">{result.locksProcessed}</span>
+                <span>스폰</span><span className="text-text">{result.spawnsProcessed}</span>
+              </div>
+              <p className="text-xs text-text-muted mt-2">{(result.durationMs / 1000).toFixed(1)}초 소요</p>
+            </div>
+          ) : null}
+          <button
+            onClick={() => setShowResult(false)}
+            className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center rounded text-text-muted hover:text-text cursor-pointer"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const location = useLocation();
   const [mapsOpen, setMapsOpen] = useState(false);
   const flyoutRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuthStore();
 
   const isMapActive = location.pathname.startsWith('/map');
 
@@ -184,15 +309,24 @@ export default function Sidebar() {
         {/* Spacer */}
         <div className="flex-1" />
 
+        {/* Sync button (authenticated only) */}
+        {user && (
+          <div className="flex-shrink-0 mb-2">
+            <SyncButton />
+          </div>
+        )}
+
         {/* Login */}
-        <div className="flex-shrink-0 mt-4">
-          <NavButton
-            icon={LogIn}
-            label="로그인"
-            path="/login"
-            isActive={location.pathname === '/login'}
-          />
-        </div>
+        {!user && (
+          <div className="flex-shrink-0 mt-4">
+            <NavButton
+              icon={LogIn}
+              label="로그인"
+              path="/login"
+              isActive={location.pathname === '/login'}
+            />
+          </div>
+        )}
       </nav>
 
       {/* Maps flyout panel */}

@@ -10,12 +10,14 @@ public class MapFloorInfo {
     private String floorId;
     private String floorLabel;
     private Integer floorOrder;
+    private String floorImage;
 
     public static MapFloorInfo from(MapFloor floor) {
         return MapFloorInfo.builder()
                 .floorId(floor.getFloorId())
                 .floorLabel(floor.getFloorLabel())
                 .floorOrder(floor.getFloorOrder())
+                .floorImage(floor.getFloorImage())
                 .build();
     }
 }

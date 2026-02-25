@@ -20,6 +20,7 @@ public class TarkovObjectiveDto {
     private String description;
     private Boolean optional;
     private List<TarkovMapReferenceDto> maps;
+    private List<TarkovZoneDto> zones;
 
     // TaskObjectiveItem 필드
     private TarkovItemDto item;

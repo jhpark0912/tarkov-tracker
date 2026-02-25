@@ -49,3 +49,11 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs '-Dfile.encoding=UTF-8', '-Dconsole.encoding=UTF-8'
+}
+
+bootRun {
+    jvmArgs '-Dfile.encoding=UTF-8', '-Dconsole.encoding=UTF-8'
+}

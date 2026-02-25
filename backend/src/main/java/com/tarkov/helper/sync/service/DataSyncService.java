@@ -38,6 +38,8 @@ public class DataSyncService {
     private final QuestRepository questRepository;
     private final QuestObjectiveRepository questObjectiveRepository;
     private final QuestPrerequisiteRepository questPrerequisiteRepository;
+    private final MapPositionSyncService mapPositionSyncService;
+    private final CoordinateConverter coordinateConverter;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -54,7 +56,12 @@ public class DataSyncService {
         }
 
         // 1. 맵 동기화 (API + 메타데이터)
-        Map<String, GameMap> mapCache = syncMaps(tasks, apiMaps);
+        Map<String, MapMetadata> metadata = loadMapMetadata();
+        Map<String, GameMap> mapCache = syncMaps(tasks, apiMaps, metadata);
+
+        // 1.5 맵 위치 데이터 동기화 (탈출구, 잠금, 스폰)
+        Map<String, MapPositionSyncService.MapPositionMeta> positionMeta = buildPositionMeta(metadata);
+        int[] positionStats = mapPositionSyncService.syncMapPositions(apiMaps, mapCache, positionMeta);
 
         // 2. 딜러 동기화
         Map<String, Trader> traderCache = syncTraders(tasks);
@@ -71,7 +78,7 @@ public class DataSyncService {
 
         // 6. 퀘스트 목표 + 목표 아이템 동기화
         Map<String, GpsData> gpsCache = loadObjectiveGps();
-        syncQuestObjectives(tasks, questCache, mapCache, itemCache, gpsCache);
+        syncQuestObjectives(tasks, questCache, mapCache, itemCache, gpsCache, positionMeta);
 
         // 7. 삭제된 퀘스트 soft delete
         Set<String> apiQuestIds = tasks.stream().map(TarkovTaskDto::getId).collect(Collectors.toSet());
@@ -85,6 +92,9 @@ public class DataSyncService {
                 .questsAdded(questStats[0])
                 .questsUpdated(questStats[1])
                 .questsRemoved(removedCount)
+                .extractsProcessed(positionStats[0])
+                .locksProcessed(positionStats[1])
+                .spawnsProcessed(positionStats[2])
                 .durationMs(duration)
                 .build();
 
@@ -94,8 +104,7 @@ public class DataSyncService {
 
     // ─── 맵 동기화 ────────────────────────────────────────────────────────────
 
-    private Map<String, GameMap> syncMaps(List<TarkovTaskDto> tasks, List<TarkovMapDto> apiMaps) {
-        Map<String, MapMetadata> metadata = loadMapMetadata();
+    private Map<String, GameMap> syncMaps(List<TarkovTaskDto> tasks, List<TarkovMapDto> apiMaps, Map<String, MapMetadata> metadata) {
         Map<String, GameMap> cache = new HashMap<>();
 
         // API maps 기준으로 upsert
@@ -145,11 +154,14 @@ public class DataSyncService {
             mapFloorRepository.deleteByGameMap(map);
             for (int i = 0; i < meta.floors().size(); i++) {
                 FloorMetadata floorMeta = meta.floors().get(i);
+                String floorImage = meta.floorImages() != null
+                        ? meta.floorImages().get(floorMeta.floorId()) : null;
                 mapFloorRepository.save(MapFloor.builder()
                         .gameMap(map)
                         .floorId(floorMeta.floorId())
                         .floorLabel(floorMeta.floorLabel())
                         .floorOrder(floorMeta.floorOrder() != null ? floorMeta.floorOrder() : i)
+                        .floorImage(floorImage)
                         .build());
             }
         }
@@ -299,7 +311,10 @@ public class DataSyncService {
                                      Map<String, Quest> questCache,
                                      Map<String, GameMap> mapCache,
                                      Map<String, Item> itemCache,
-                                     Map<String, GpsData> gpsCache) {
+                                     Map<String, GpsData> gpsCache,
+                                     Map<String, MapPositionSyncService.MapPositionMeta> positionMeta) {
+        int apiPosCount = 0, gpsPosCount = 0;
+
         for (TarkovTaskDto dto : tasks) {
             Quest quest = questCache.get(dto.getId());
             if (quest == null || dto.getObjectives() == null) continue;
@@ -308,7 +323,6 @@ public class DataSyncService {
                 if (objDto.getId() == null) continue;
 
                 GameMap objMap = resolveObjectiveMap(objDto, mapCache);
-                GpsData gps = gpsCache.get(objDto.getId());
 
                 QuestObjective objective = questObjectiveRepository.findByApiId(objDto.getId()).orElse(null);
                 if (objective == null) {
@@ -330,9 +344,22 @@ public class DataSyncService {
                     );
                 }
 
-                // GPS 좌표 업데이트
-                if (gps != null) {
-                    objective.updatePosition(gps.leftPercent(), gps.topPercent(), gps.floor());
+                // 좌표 업데이트: API zone 우선, objective_gps.json fallback
+                boolean positionSet = false;
+
+                // 1) API zone 좌표 사용
+                if (objDto.getZones() != null && !objDto.getZones().isEmpty()) {
+                    positionSet = trySetPositionFromZone(objective, objDto, mapCache, positionMeta);
+                    if (positionSet) apiPosCount++;
+                }
+
+                // 2) fallback: objective_gps.json
+                if (!positionSet) {
+                    GpsData gps = gpsCache.get(objDto.getId());
+                    if (gps != null) {
+                        objective.updatePosition(gps.leftPercent(), gps.topPercent(), gps.floor());
+                        gpsPosCount++;
+                    }
                 }
 
                 // 아이템 목록 재동기화
@@ -340,7 +367,40 @@ public class DataSyncService {
                 syncObjectiveItems(objective, objDto, itemCache);
             }
         }
-        log.debug("퀘스트 목표 동기화 완료");
+        log.info("퀘스트 목표 좌표: API zone {}건, GPS fallback {}건", apiPosCount, gpsPosCount);
+    }
+
+    private boolean trySetPositionFromZone(QuestObjective objective, TarkovObjectiveDto objDto,
+                                           Map<String, GameMap> mapCache,
+                                           Map<String, MapPositionSyncService.MapPositionMeta> positionMeta) {
+        for (TarkovZoneDto zone : objDto.getZones()) {
+            if (zone.getPosition() == null) continue;
+            TarkovMapDto.TarkovPositionDto pos = zone.getPosition();
+            if (pos.getX() == null || pos.getZ() == null) continue;
+
+            // zone의 맵 식별
+            String mapApiId = zone.getMap() != null ? zone.getMap().getId() : null;
+            if (mapApiId == null) continue;
+
+            GameMap gameMap = mapCache.get(mapApiId);
+            if (gameMap == null) continue;
+
+            // 해당 맵의 메타데이터 조회
+            MapPositionSyncService.MapPositionMeta meta = positionMeta.get(gameMap.getNormalizedName());
+            if (meta == null || meta.bounds() == null) continue;
+
+            double gameY = pos.getY() != null ? pos.getY() : 0;
+            CoordinateConverter.ConvertedPosition converted = coordinateConverter.convert(
+                    pos.getX(), gameY, pos.getZ(),
+                    meta.bounds(), meta.coordinateRotation(),
+                    meta.floorRanges(), meta.defaultFloor());
+
+            if (converted.positionX() != null && converted.positionY() != null) {
+                objective.updatePosition(converted.positionX(), converted.positionY(), converted.floorId());
+                return true;
+            }
+        }
+        return false;
     }
 
     private GameMap resolveObjectiveMap(TarkovObjectiveDto objDto, Map<String, GameMap> mapCache) {
@@ -437,13 +497,32 @@ public class DataSyncService {
     // ─── 내부 메타데이터 레코드 ───────────────────────────────────────────────
 
     record MapMetadata(String svgFile, String defaultFloor, Integer coordinateRotation,
-                       List<FloorMetadata> floors, List<String> aliases) {
+                       List<FloorMetadata> floors, List<String> aliases,
+                       double[][] bounds, List<FloorRangeMetadata> floorRanges,
+                       Map<String, String> floorImages) {
         MapMetadata() {
-            this(null, null, 0, List.of(), List.of());
+            this(null, null, 0, List.of(), List.of(), null, List.of(), null);
         }
     }
 
     record FloorMetadata(String floorId, String floorLabel, Integer floorOrder) {}
 
+    record FloorRangeMetadata(String floorId, double yMin, double yMax) {}
+
     record GpsData(String map, Double leftPercent, Double topPercent, String floor) {}
+
+    private Map<String, MapPositionSyncService.MapPositionMeta> buildPositionMeta(Map<String, MapMetadata> metadata) {
+        Map<String, MapPositionSyncService.MapPositionMeta> result = new HashMap<>();
+        metadata.forEach((key, meta) -> {
+            List<CoordinateConverter.FloorRange> ranges = meta.floorRanges() != null
+                    ? meta.floorRanges().stream()
+                        .map(fr -> new CoordinateConverter.FloorRange(fr.floorId(), fr.yMin(), fr.yMax()))
+                        .collect(Collectors.toList())
+                    : List.of();
+            result.put(key, new MapPositionSyncService.MapPositionMeta(
+                    meta.bounds(), meta.coordinateRotation() != null ? meta.coordinateRotation() : 180,
+                    ranges, meta.defaultFloor()));
+        });
+        return result;
+    }
 }

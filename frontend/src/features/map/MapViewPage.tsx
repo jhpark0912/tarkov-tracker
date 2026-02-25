@@ -1,27 +1,37 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Eye, EyeOff, Crown, AlertCircle, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { Eye, EyeOff, Crown, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw, LogOut, Lock, Users, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useMapStore } from '../../store/mapStore';
 import { useProgressStore } from '../../store/progressStore';
 import MapQuestPanel from './components/MapQuestPanel';
-import type { QuestMapMarker } from '../../types/map';
+import MapMarkerLayer from './components/MapMarkerLayer';
+import MapMarkerPopup from './components/MapMarkerPopup';
+import { MARKER_CONFIG } from './constants/markerConfig';
+import type { MarkerCategory } from '../../types/map';
+import type { PopupData } from './components/MapMarkerPopup';
 
-interface MarkerPopup {
-  marker: QuestMapMarker;
-}
+const CATEGORY_ICONS: Record<MarkerCategory, typeof AlertCircle> = {
+  quests: AlertCircle,
+  extracts: LogOut,
+  locks: Lock,
+  spawns: Users,
+};
 
 export default function MapViewPage() {
   const { normalizedName } = useParams<{ normalizedName: string }>();
-  const { currentMap, markers, loading, error, fetchMapDetail, fetchMarkers, clearCurrentMap } = useMapStore();
+  const {
+    currentMap, markers, positions, markerVisibility, loading, error,
+    fetchMapDetail, fetchMarkers, fetchPositions, toggleMarkerCategory, clearCurrentMap,
+  } = useMapStore();
   const { questStatuses } = useProgressStore();
 
   // ── Map / filter state ──────────────────────────────────────────────────────
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
   const [kappaOnly, setKappaOnly] = useState(false);
-  const [popup, setPopup] = useState<MarkerPopup | null>(null);
+  const [popup, setPopup] = useState<PopupData | null>(null);
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [svgViewBox, setSvgViewBox] = useState<{ w: number; h: number } | null>(null);
   const [pngUrl, setPngUrl] = useState<string | null>(null);
@@ -33,7 +43,6 @@ export default function MapViewPage() {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  // refs: 이벤트 핸들러에서 stale closure 방지
   const zoomPanRef = useRef({ zoom: 1, pan: { x: 0, y: 0 } });
   zoomPanRef.current = { zoom, pan };
   const dragRef = useRef({ active: false, startX: 0, startY: 0, panX: 0, panY: 0, moved: false });
@@ -62,7 +71,6 @@ export default function MapViewPage() {
     }
   }, [svgContent]);
 
-  // currentMap 의존성: loading=true 시 ref가 null이어서 [] deps로는 관찰 미설치
   useEffect(() => {
     const el = mapContainerRef.current;
     if (!el) return;
@@ -92,6 +100,7 @@ export default function MapViewPage() {
   useEffect(() => {
     if (!normalizedName) return;
     fetchMapDetail(normalizedName);
+    fetchPositions(normalizedName);
     return () => {
       clearCurrentMap();
       setSvgContent(null);
@@ -99,15 +108,27 @@ export default function MapViewPage() {
       setPan({ x: 0, y: 0 });
       setSelectedQuestIds(new Set());
     };
-  }, [normalizedName, fetchMapDetail, clearCurrentMap]);
+  }, [normalizedName, fetchMapDetail, fetchPositions, clearCurrentMap]);
+
+  // 맵에 층별 이미지가 있는지 확인
+  const hasFloorImages = useMemo(
+    () => currentMap?.floors.some((f) => f.floorImage) ?? false,
+    [currentMap]
+  );
 
   useEffect(() => {
     if (!currentMap) return;
     setSelectedFloor(currentMap.defaultFloor ?? currentMap.floors[0]?.floorId ?? null);
     fetchMarkers(currentMap.id);
+
+    // floorImage가 있는 맵(Lab 등)은 층 전환 effect에서 pngUrl 관리
+    const floorImagesExist = currentMap.floors.some((f) => f.floorImage);
+
     if (currentMap.svgFile) {
       if (currentMap.svgFile.endsWith('.png')) {
-        setPngUrl(`/maps/${currentMap.svgFile}`);
+        if (!floorImagesExist) {
+          setPngUrl(`/maps/${currentMap.svgFile}`);
+        }
         setSvgContent(null);
       } else {
         setPngUrl(null);
@@ -130,19 +151,52 @@ export default function MapViewPage() {
     }
   }, [currentMap, fetchMarkers]);
 
+  // 층별 이미지 전환 (Lab 등 floorImage가 있는 맵)
+  useEffect(() => {
+    if (!hasFloorImages || !selectedFloor || !currentMap) return;
+    const floor = currentMap.floors.find((f) => f.floorId === selectedFloor);
+    if (floor?.floorImage) {
+      const nextUrl = `/maps/${floor.floorImage}`;
+      setPngNaturalSize(null);
+      setPngUrl(nextUrl);
+    }
+  }, [selectedFloor, hasFloorImages, currentMap]);
+
+  // ── SVG 그룹 합침 설정 (여러 SVG 그룹을 하나의 논리 층으로 통합) ────────────
+  // Ground Zero: Ground_Level + First_Floor → 1층
+  const SVG_GROUP_MERGE: Record<string, Record<string, string[]>> = {
+    'ground-zero': { 'Ground_Level': ['Ground_Level', 'First_Floor'] },
+  };
+
   // ── 층 가시성 (SVG 그룹 직접 조작) ──────────────────────────────────────────
   useEffect(() => {
     if (!svgRef.current || !selectedFloor || !currentMap) return;
     const container = svgRef.current;
     const groundId = currentMap.defaultFloor;
     const isGround = selectedFloor === groundId;
+    const mergeMap = SVG_GROUP_MERGE[currentMap.normalizedName] ?? {};
+
+    // 이 맵에서 논리 층에 매핑된 모든 SVG 그룹 ID 수집
+    const floorToGroups = new Map<string, string[]>();
+    const allManagedGroups = new Set<string>();
     currentMap.floors.forEach((f) => {
-      const el = container.querySelector<SVGGElement>(`#${CSS.escape(f.floorId)}`);
+      const groups = mergeMap[f.floorId] ?? [f.floorId];
+      floorToGroups.set(f.floorId, groups);
+      groups.forEach((g) => allManagedGroups.add(g));
+    });
+
+    // 각 SVG 그룹의 가시성 설정
+    allManagedGroups.forEach((groupId) => {
+      const el = container.querySelector<SVGGElement>(`#${CSS.escape(groupId)}`);
       if (!el) return;
       el.style.transition = 'opacity 0.4s ease, filter 0.4s ease';
-      if (f.floorId === selectedFloor) {
+
+      const selectedGroups = floorToGroups.get(selectedFloor) ?? [];
+      const groundGroups = floorToGroups.get(groundId ?? '') ?? [];
+
+      if (selectedGroups.includes(groupId)) {
         el.style.display = 'inline'; el.style.opacity = '1'; el.style.filter = 'none';
-      } else if (f.floorId === groundId && !isGround) {
+      } else if (groundGroups.includes(groupId) && !isGround) {
         el.style.display = 'inline'; el.style.opacity = '0.2'; el.style.filter = 'blur(3px)';
       } else {
         el.style.display = 'none';
@@ -209,13 +263,19 @@ export default function MapViewPage() {
   const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
 
   // ── 마커 클릭 ───────────────────────────────────────────────────────────────
-  const handleMarkerClick = (marker: QuestMapMarker, e: React.MouseEvent) => {
+  const handleMarkerClick = useCallback((popupData: PopupData, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (dragRef.current.moved) return; // 드래그였으면 팝업 무시
-    setPopup((prev) =>
-      prev?.marker.objectiveId === marker.objectiveId ? null : { marker }
-    );
-  };
+    if (dragRef.current.moved) return;
+    setPopup((prev) => {
+      if (!prev) return popupData;
+      // 같은 마커 클릭 시 닫기
+      if (prev.type === popupData.type) {
+        if (prev.type === 'quest' && popupData.type === 'quest' && prev.data.objectiveId === popupData.data.objectiveId) return null;
+        if (prev.type !== 'quest' && popupData.type !== 'quest' && prev.data === popupData.data) return null;
+      }
+      return popupData;
+    });
+  }, []);
 
   // ── 퀘스트 패널 ─────────────────────────────────────────────────────────────
   const toggleQuest = useCallback((questId: number) => {
@@ -227,40 +287,77 @@ export default function MapViewPage() {
   }, []);
 
   // ── 파생 값 ─────────────────────────────────────────────────────────────────
-  const isCompleted = (questId: number) => questStatuses[String(questId)] === 'COMPLETED';
+  const isCompleted = useCallback(
+    (questId: number) => questStatuses[String(questId)] === 'COMPLETED',
+    [questStatuses]
+  );
 
-  const getFloorDistance = (floorId: string | null): number => {
-    if (!floorId || !selectedFloor) return 0;
-    const a = floors.findIndex((f) => f.floorId === floorId);
-    const b = floors.findIndex((f) => f.floorId === selectedFloor);
-    return a === -1 || b === -1 ? 0 : Math.abs(a - b);
-  };
+  const getFloorDistance = useCallback(
+    (floorId: string | null): number => {
+      if (!floorId || !selectedFloor) return 0;
+      const a = floors.findIndex((f) => f.floorId === floorId);
+      const b = floors.findIndex((f) => f.floorId === selectedFloor);
+      return a === -1 || b === -1 ? 0 : Math.abs(a - b);
+    },
+    [floors, selectedFloor]
+  );
 
-  const visibleMarkers = useMemo(
-    () =>
-      markers.filter((m) => {
+  // 퀘스트 마커 필터링
+  const visibleQuestMarkers = useMemo(
+    () => {
+      if (!markerVisibility.quests) return [];
+      return markers.filter((m) => {
         if (m.positionX === null || m.positionY === null) return false;
         if (hideCompleted && isCompleted(m.questId)) return false;
         if (kappaOnly && !m.kappaRequired) return false;
         if (selectedQuestIds.size > 0 && !selectedQuestIds.has(m.questId)) return false;
         return true;
-      }),
+      });
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [markers, hideCompleted, kappaOnly, selectedQuestIds, questStatuses]
+    [markers, hideCompleted, kappaOnly, selectedQuestIds, questStatuses, markerVisibility.quests]
   );
 
-  // 팝업 위치: zoomable 레이어 밖, 화면 좌표로 변환
+  // 탈출구/잠금/스폰 마커 필터링 (좌표 있는 것만)
+  const visibleExtracts = useMemo(
+    () => markerVisibility.extracts && positions?.extracts
+      ? positions.extracts.filter((m) => m.positionX !== null && m.positionY !== null)
+      : [],
+    [positions, markerVisibility.extracts]
+  );
+
+  const visibleLocks = useMemo(
+    () => markerVisibility.locks && positions?.locks
+      ? positions.locks.filter((m) => m.positionX !== null && m.positionY !== null)
+      : [],
+    [positions, markerVisibility.locks]
+  );
+
+  const visibleSpawns = useMemo(
+    () => markerVisibility.spawns && positions?.spawns
+      ? positions.spawns.filter((m) => m.positionX !== null && m.positionY !== null)
+      : [],
+    [positions, markerVisibility.spawns]
+  );
+
+  const totalVisibleMarkers = visibleQuestMarkers.length + visibleExtracts.length + visibleLocks.length + visibleSpawns.length;
+
+  // 팝업 위치 계산
   const popupScreenPos = useMemo(() => {
     if (!popup || !mapBounds || !containerSize) return null;
-    const wx = mapBounds.left + (popup.marker.positionX! / 100) * mapBounds.width;
-    const wy = mapBounds.top + (popup.marker.positionY! / 100) * mapBounds.height;
-    const sx = pan.x + wx * zoom;
-    const sy = pan.y + wy * zoom;
-    const POPUP_W = 224;
-    return {
-      x: Math.min(Math.max(sx, POPUP_W / 2 + 8), containerSize.w - POPUP_W / 2 - 8),
-      y: sy,
-    };
+    let posX: number | null = null;
+    let posY: number | null = null;
+    if (popup.type === 'quest') {
+      posX = popup.data.positionX;
+      posY = popup.data.positionY;
+    } else {
+      posX = popup.data.positionX;
+      posY = popup.data.positionY;
+    }
+    if (posX === null || posY === null) return null;
+    const wx = mapBounds.left + (posX / 100) * mapBounds.width;
+    const wy = mapBounds.top + (posY / 100) * mapBounds.height;
+    return { x: pan.x + wx * zoom, y: pan.y + wy * zoom };
   }, [popup, mapBounds, pan, zoom, containerSize]);
 
   // ── Loading / error ──────────────────────────────────────────────────────────
@@ -293,6 +390,28 @@ export default function MapViewPage() {
               <ChevronLeft size={18} />
             </Link>
             <h2 className="text-lg font-semibold text-text mr-2">{currentMap.name}</h2>
+
+            {/* 카테고리 토글 버튼 */}
+            {(Object.keys(MARKER_CONFIG) as MarkerCategory[]).map((cat) => {
+              const config = MARKER_CONFIG[cat];
+              const Icon = CATEGORY_ICONS[cat];
+              const isActive = markerVisibility[cat];
+              return (
+                <button
+                  key={cat}
+                  onClick={() => toggleMarkerCategory(cat)}
+                  className={cn(
+                    'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
+                    isActive ? config.activeColor : 'bg-surface-alt text-text-secondary hover:text-text'
+                  )}
+                >
+                  <Icon size={14} />
+                  {config.label}
+                </button>
+              );
+            })}
+
+            <div className="h-5 w-px bg-border mx-1" />
 
             <button
               onClick={() => setHideCompleted((v) => !v)}
@@ -327,7 +446,7 @@ export default function MapViewPage() {
               퀘스트 목록
             </button>
 
-            <span className="text-xs text-text-muted ml-auto">{visibleMarkers.length}개 마커</span>
+            <span className="text-xs text-text-muted ml-auto">{totalVisibleMarkers}개 마커</span>
           </div>
         </div>
 
@@ -345,7 +464,7 @@ export default function MapViewPage() {
             onMouseLeave={handleMouseUp}
             onClick={() => { if (!dragRef.current.moved) setPopup(null); }}
           >
-            {/* Zoomable layer: SVG + markers */}
+            {/* Zoomable layer */}
             <div
               className="absolute inset-0"
               style={{
@@ -384,49 +503,20 @@ export default function MapViewPage() {
                 </div>
               )}
 
-              {/* Markers — 모든 층 표시, 거리에 따라 블러 */}
-              {mapBounds && visibleMarkers.map((marker) => {
-                const dist = getFloorDistance(marker.floorId);
-                const ml = mapBounds.left + (marker.positionX! / 100) * mapBounds.width;
-                const mt = mapBounds.top + (marker.positionY! / 100) * mapBounds.height;
-                return (
-                  <div
-                    key={marker.objectiveId}
-                    className="absolute group cursor-pointer"
-                    style={{
-                      left: `${ml}px`,
-                      top: `${mt}px`,
-                      transform: 'translate(-50%, -50%)',
-                      opacity: dist === 0 ? 1 : dist === 1 ? 0.4 : 0.2,
-                      filter: dist > 0 ? `blur(${Math.min(dist, 2)}px)` : 'none',
-                      zIndex: dist === 0 ? 10 : 5,
-                      transition: 'opacity 0.3s, filter 0.3s',
-                    }}
-                    onClick={(e) => handleMarkerClick(marker, e)}
-                  >
-                    <div
-                      className={cn(
-                        'w-5 h-5 rounded-full flex items-center justify-center transition-transform group-hover:scale-125',
-                        isCompleted(marker.questId) ? 'bg-complete/80' : 'bg-gold'
-                      )}
-                      style={{
-                        boxShadow: isCompleted(marker.questId)
-                          ? '0 0 8px rgba(52,211,153,0.5)'
-                          : '0 0 8px rgba(230,184,0,0.5)',
-                      }}
-                    >
-                      <AlertCircle size={10} className="text-bg" />
-                    </div>
-                    {!popup && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
-                        <div className="bg-bg/90 backdrop-blur-sm text-text text-[10px] px-2 py-1 rounded-lg">
-                          {marker.questName}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {/* 마커 레이어 */}
+              {mapBounds && (
+                <MapMarkerLayer
+                  mapBounds={mapBounds}
+                  questMarkers={visibleQuestMarkers}
+                  extractMarkers={visibleExtracts}
+                  lockMarkers={visibleLocks}
+                  spawnMarkers={visibleSpawns}
+                  getFloorDistance={getFloorDistance}
+                  isCompleted={isCompleted}
+                  onMarkerClick={handleMarkerClick}
+                  activePopup={popup}
+                />
+              )}
             </div>
 
             {/* 층 선택 (zoomable 레이어 밖) */}
@@ -457,7 +547,7 @@ export default function MapViewPage() {
               </div>
             )}
 
-            {/* 줌 컨트롤 (bottom-right) */}
+            {/* 줌 컨트롤 */}
             <div className="absolute bottom-4 right-4 flex flex-col gap-1 z-20">
               <button
                 onMouseDown={(e) => e.stopPropagation()}
@@ -483,55 +573,13 @@ export default function MapViewPage() {
               </button>
             </div>
 
-            {/* 팝업 (zoomable 레이어 밖, 화면 좌표) */}
-            {popup && popupScreenPos && (
-              <div
-                className="absolute z-30 pointer-events-none"
-                style={{
-                  left: `${popupScreenPos.x}px`,
-                  top: `${popupScreenPos.y}px`,
-                  transform: 'translate(-50%, calc(-100% - 12px))',
-                }}
-              >
-                <div className="pointer-events-auto bg-bg/95 backdrop-blur-md border border-border rounded-2xl p-4 w-56 shadow-xl">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <Link
-                      to={`/quests/${popup.marker.questId}`}
-                      className="text-sm font-semibold text-gold hover:underline leading-tight"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {popup.marker.questName}
-                    </Link>
-                    {popup.marker.kappaRequired && (
-                      <Crown size={12} className="text-gold shrink-0 mt-0.5" />
-                    )}
-                  </div>
-                  <p className="text-xs text-text-secondary mb-2">{popup.marker.objectiveDescription}</p>
-                  {popup.marker.traderName && (
-                    <p className="text-[10px] text-text-muted uppercase">{popup.marker.traderName}</p>
-                  )}
-                  {popup.marker.requiredItems.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-border space-y-1">
-                      {popup.marker.requiredItems.map((item, i) => (
-                        <div key={i} className="flex items-center justify-between text-[10px]">
-                          <span className="text-text-secondary">{item.itemName}</span>
-                          <span className="text-text-muted">
-                            x{item.count}{item.foundInRaid ? ' (FIR)' : ''}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-3 pt-2 border-t border-border">
-                    <span className={cn(
-                      'text-[10px] font-medium uppercase',
-                      isCompleted(popup.marker.questId) ? 'text-complete' : 'text-text-muted'
-                    )}>
-                      {isCompleted(popup.marker.questId) ? '완료' : '미완료'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+            {/* 팝업 */}
+            {popup && popupScreenPos && containerSize && (
+              <MapMarkerPopup
+                popup={popup}
+                screenPos={popupScreenPos}
+                containerWidth={containerSize.w}
+              />
             )}
 
             {/* 조작 힌트 */}

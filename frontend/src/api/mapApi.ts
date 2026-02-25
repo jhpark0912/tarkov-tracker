@@ -1,5 +1,5 @@
 import axiosInstance from './axiosInstance';
-import type { MapListItem, MapDetail, QuestMapMarker } from '../types/map';
+import type { MapListItem, MapDetail, QuestMapMarker, MapPositionData } from '../types/map';
 
 export const mapApi = {
   getMapList: () =>
@@ -14,4 +14,7 @@ export const mapApi = {
         params: floor ? { floor } : undefined,
       })
       .then((r) => r.data),
+
+  getMapPositions: (normalizedName: string) =>
+    axiosInstance.get<MapPositionData>(`/maps/${normalizedName}/positions`).then((r) => r.data),
 };

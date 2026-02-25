@@ -2,6 +2,7 @@ export interface MapFloorInfo {
   floorId: string;
   floorLabel: string;
   floorOrder: number;
+  floorImage: string | null;
 }
 
 export interface MapListItem {
@@ -37,3 +38,39 @@ export interface QuestMapMarker {
   kappaRequired: boolean;
   requiredItems: MarkerItemDto[];
 }
+
+export interface MapExtractMarker {
+  name: string;
+  faction: string | null;
+  floorId: string | null;
+  positionX: number | null;
+  positionY: number | null;
+}
+
+export interface MapLockMarker {
+  lockType: string | null;
+  needsPower: boolean | null;
+  keyName: string | null;
+  keyShortName: string | null;
+  keyIconUrl: string | null;
+  floorId: string | null;
+  positionX: number | null;
+  positionY: number | null;
+}
+
+export interface MapSpawnMarker {
+  zoneName: string | null;
+  sides: string[];
+  categories: string[];
+  floorId: string | null;
+  positionX: number | null;
+  positionY: number | null;
+}
+
+export interface MapPositionData {
+  extracts: MapExtractMarker[];
+  locks: MapLockMarker[];
+  spawns: MapSpawnMarker[];
+}
+
+export type MarkerCategory = 'quests' | 'extracts' | 'locks' | 'spawns';

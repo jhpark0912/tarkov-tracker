@@ -17,15 +17,16 @@ public class TarkovApiClient {
 
     private final WebClient tarkovWebClient;
 
+    private static final String ZONES_FRAGMENT = "zones { map { id } position { x y z } }";
     private static final String TASKS_QUERY = """
             {
-              "query": "{ tasks { id name kappaRequired minPlayerLevel wikiLink taskImageLink experience trader { id name imageLink } map { id name normalizedName } taskRequirements { task { id } } objectives { id type description optional maps { id normalizedName } ... on TaskObjectiveItem { item { id name shortName iconLink wikiLink width height } items { id name shortName iconLink wikiLink width height } count foundInRaid } ... on TaskObjectiveMark { markerItem { id name shortName iconLink } } } } }"
+              "query": "{ tasks { id name kappaRequired minPlayerLevel wikiLink taskImageLink experience trader { id name imageLink } map { id name normalizedName } taskRequirements { task { id } } objectives { id type description optional maps { id normalizedName } ... on TaskObjectiveBasic { %1$s } ... on TaskObjectiveItem { item { id name shortName iconLink wikiLink width height } items { id name shortName iconLink wikiLink width height } count foundInRaid %1$s } ... on TaskObjectiveMark { markerItem { id name shortName iconLink } %1$s } ... on TaskObjectiveShoot { %1$s } ... on TaskObjectiveQuestItem { %1$s } ... on TaskObjectiveUseItem { %1$s } } } }"
             }
-            """;
+            """.formatted(ZONES_FRAGMENT);
 
     private static final String MAPS_QUERY = """
             {
-              "query": "{ maps { id name normalizedName } }"
+              "query": "{ maps { id name normalizedName extracts { id name faction position { x y z } top bottom } locks { lockType needsPower key { id name shortName iconLink } position { x y z } top bottom } spawns { zoneName position { x y z } sides categories } bosses { name spawnChance spawnLocations { name chance } } } }"
             }
             """;
 

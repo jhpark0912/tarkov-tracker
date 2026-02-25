@@ -1,11 +1,9 @@
 package com.tarkov.helper.domain.map.service;
 
-import com.tarkov.helper.domain.map.dto.MapDetail;
-import com.tarkov.helper.domain.map.dto.MapListItem;
+import com.tarkov.helper.domain.map.dto.*;
 import com.tarkov.helper.domain.map.entity.GameMap;
 import com.tarkov.helper.domain.map.entity.MapFloor;
-import com.tarkov.helper.domain.map.repository.GameMapRepository;
-import com.tarkov.helper.domain.map.repository.MapFloorRepository;
+import com.tarkov.helper.domain.map.repository.*;
 import com.tarkov.helper.global.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +19,9 @@ public class MapService {
 
     private final GameMapRepository gameMapRepository;
     private final MapFloorRepository mapFloorRepository;
+    private final MapExtractRepository mapExtractRepository;
+    private final MapLockRepository mapLockRepository;
+    private final MapSpawnRepository mapSpawnRepository;
 
     public List<MapListItem> getMapList() {
         return gameMapRepository.findAll().stream()
@@ -34,5 +35,28 @@ public class MapService {
 
         List<MapFloor> floors = mapFloorRepository.findByGameMapOrderByFloorOrder(map);
         return MapDetail.from(map, floors);
+    }
+
+    public MapPositionData getMapPositions(String normalizedName) {
+        GameMap map = gameMapRepository.findByNormalizedName(normalizedName)
+                .orElseThrow(() -> new ResourceNotFoundException("맵을 찾을 수 없습니다: " + normalizedName));
+
+        List<MapExtractMarker> extracts = mapExtractRepository.findByGameMap(map).stream()
+                .map(MapExtractMarker::from)
+                .collect(Collectors.toList());
+
+        List<MapLockMarker> locks = mapLockRepository.findByGameMap(map).stream()
+                .map(MapLockMarker::from)
+                .collect(Collectors.toList());
+
+        List<MapSpawnMarker> spawns = mapSpawnRepository.findByGameMap(map).stream()
+                .map(MapSpawnMarker::from)
+                .collect(Collectors.toList());
+
+        return MapPositionData.builder()
+                .extracts(extracts)
+                .locks(locks)
+                .spawns(spawns)
+                .build();
     }
 }

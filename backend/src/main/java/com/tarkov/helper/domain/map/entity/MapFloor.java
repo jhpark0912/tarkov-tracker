@@ -30,4 +30,7 @@ public class MapFloor {
     @Builder.Default
     @Column(name = "floor_order")
     private Integer floorOrder = 0;
+
+    @Column(name = "floor_image", length = 100)
+    private String floorImage;
 }
