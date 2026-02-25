@@ -1,0 +1,1441 @@
+{
+    "mapImage": "The Labyrinth Interactive Map Base.png",
+    "pageCategories": [
+        "Interactive Maps"
+    ],
+    "defaultSort": "",
+    "description": "{{The Labyrinth Interactive Map Description}}",
+    "coordinateOrder": "xy",
+    "mapBounds": [
+        [
+            0,
+            0
+        ],
+        [
+            4145,
+            3840
+        ]
+    ],
+    "origin": "bottom-left",
+    "useMarkerClustering": false,
+    "categories": [
+        {
+            "id": "exfil_pmc",
+            "listId": 1,
+            "name": "PMC",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map extract icon.png"
+        },
+        {
+            "id": "spawn_pmc",
+            "listId": 2,
+            "name": "PMC",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map PMC Spawn icon.png"
+        },
+        {
+            "id": "spawn_boss",
+            "listId": 3,
+            "name": "Boss",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map boss spawn.png"
+        },
+        {
+            "id": "lever",
+            "listId": 4,
+            "name": "Lever\/Button",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map lever icon.png"
+        },
+        {
+            "id": "locked",
+            "listId": 5,
+            "name": "Locked\/Item Required",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map locked door icon.png"
+        },
+        {
+            "id": "quest",
+            "listId": 6,
+            "name": "Quest Related",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map quest item icon.png"
+        },
+        {
+            "id": "loot_key",
+            "listId": 7,
+            "name": "Key\/Gas Torch\/Valve Handwheel Spawn",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map key icon.png"
+        },
+        {
+            "id": "loot_loose",
+            "listId": 8,
+            "name": "Loose Loot",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map loose loot icon.png"
+        },
+        {
+            "id": "container_ammo",
+            "listId": 9,
+            "name": "Ammo Box",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive Map ammo box.png"
+        },
+        {
+            "id": "container_dead",
+            "listId": 10,
+            "name": "Dead Scav",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map dead scav icon.png"
+        },
+        {
+            "id": "container_grenade",
+            "listId": 11,
+            "name": "Grenade Box",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map grenade box icon.png"
+        },
+        {
+            "id": "container_jacket",
+            "listId": 12,
+            "name": "Jacket",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map jacket icon.png"
+        },
+        {
+            "id": "container_crate",
+            "listId": 13,
+            "name": "Supply Crate",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map supply crate icon.png"
+        },
+        {
+            "id": "container_tool",
+            "listId": 14,
+            "name": "Toolbox",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive Map Toolbox Icon.png"
+        },
+        {
+            "id": "container_greencrate",
+            "listId": 15,
+            "name": "Wooden Crate",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "File:Interactive map wooden crate icon.png"
+        }
+    ],
+    "markers": [
+        {
+            "categoryId": "spawn_pmc",
+            "position": [
+                1059,
+                3488
+            ],
+            "popup": {
+                "title": "PMC Spawn",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "1"
+        },
+        {
+            "categoryId": "spawn_pmc",
+            "position": [
+                4059,
+                3056.1155082882583
+            ],
+            "popup": {
+                "title": "PMC Spawn",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "2"
+        },
+        {
+            "categoryId": "spawn_pmc",
+            "position": [
+                453,
+                1538
+            ],
+            "popup": {
+                "title": "PMC Spawn",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "3"
+        },
+        {
+            "categoryId": "spawn_pmc",
+            "position": [
+                2580.939751330898,
+                315.3696244092002
+            ],
+            "popup": {
+                "title": "PMC Spawn",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "4"
+        },
+        {
+            "categoryId": "spawn_pmc",
+            "position": [
+                3279,
+                1030.5
+            ],
+            "popup": {
+                "title": "PMC Spawn",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "5"
+        },
+        {
+            "categoryId": "exfil_pmc",
+            "position": [
+                2903.263867469969,
+                2040
+            ],
+            "popup": {
+                "title": "The Way Up",
+                "description": "Only available 15 min after raid start\n[[File:The Way Up.png|center|265px]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "6"
+        },
+        {
+            "categoryId": "exfil_pmc",
+            "position": [
+                1617.0366324916388,
+                1170.5
+            ],
+            "popup": {
+                "title": "Ariadne's Path",
+                "description": "Requires [[Ariadne symbol key]]\n[[File:Ariadne's Path.png|center|265px]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "7"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                1617,
+                2097
+            ],
+            "popup": {
+                "title": "Alarm button",
+                "description": "Disables the alarm",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "8"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                2789.066122308341,
+                2257.791952328646
+            ],
+            "popup": {
+                "title": "Alarm button",
+                "description": "Disables the alarm",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "9"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                1803.5,
+                1777.5
+            ],
+            "popup": {
+                "title": "Alarm button",
+                "description": "Disables the alarm",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "10"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                2525,
+                1516.036938863958
+            ],
+            "popup": {
+                "title": "Alarm button",
+                "description": "Disables the alarm",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "11"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                3433.9475067504727,
+                1961.5142110114828
+            ],
+            "popup": {
+                "title": "Alarm button",
+                "description": "Disables the alarm",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "12"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                3520.9216408364177,
+                2898.430696083658
+            ],
+            "popup": {
+                "title": "Toxic pool drainage button",
+                "description": "Sinks the toxic pool level",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "13"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                1936.295344197365,
+                272.2361107568208
+            ],
+            "popup": {
+                "title": "Toxic puddle bridge lever",
+                "description": "Lowers the bridge over the toxic puddle",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "14"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                3563,
+                940
+            ],
+            "popup": {
+                "title": "Shotgun trap lever",
+                "description": "Disables the shotgun trap",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "15"
+        },
+        {
+            "categoryId": "lever",
+            "position": [
+                1193,
+                3253.5
+            ],
+            "popup": {
+                "title": "Fire hazard button",
+                "description": "Disables the fire hazard",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "16"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                526,
+                1726
+            ],
+            "popup": {
+                "title": "Steam Valve",
+                "description": "Requires: [[Valve handwheel]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "17"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                1202.0815280171307,
+                1499.7734828966672
+            ],
+            "popup": {
+                "title": "Corpse Room",
+                "description": "Requires: [[Corpse room key]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "18"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                1177.5697679841994,
+                3439.3673836913667
+            ],
+            "popup": {
+                "title": "Padlock Door",
+                "description": "Requires: [[BBQ-S43 gas torch]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "19"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                2192.00283394395,
+                390.7648849532158
+            ],
+            "popup": {
+                "title": "Round Padlock Door",
+                "description": "Requires: [[BBQ-S43 gas torch]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "20"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                1109,
+                1504
+            ],
+            "popup": {
+                "title": "Stash a Cultist knife",
+                "description": "[[Keeper's Word]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "21"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                2209.945668516559,
+                2587.3037123615773
+            ],
+            "popup": {
+                "title": "Stash a Cultist knife",
+                "description": "[[Keeper's Word]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "22"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                2208,
+                1300
+            ],
+            "popup": {
+                "title": "Stash a Cultist knife",
+                "description": "[[Keeper's Word]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "23"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                2633,
+                2068
+            ],
+            "popup": {
+                "title": "Obtain the Special Storage Module",
+                "description": "[[Confidential Info]]<br\/>Multiple possible spawns in this area. ",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "24"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                2513.294477645588,
+                2102.2284604676056
+            ],
+            "popup": {
+                "title": "Stash a Hand Grenade in the Prototype Weapon",
+                "description": "[[Confidential Info]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "25"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                2551,
+                2016
+            ],
+            "popup": {
+                "title": "Locate the Lab Area with the Prototype Weapon",
+                "description": "[[Hypotheses Testing]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "26"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                1790.75,
+                1211.5
+            ],
+            "popup": {
+                "title": "Locate the Torture Room",
+                "description": "[[This Tape Sucks]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "27"
+        },
+        {
+            "categoryId": "quest",
+            "position": [
+                1880,
+                1271
+            ],
+            "popup": {
+                "title": "Obtain the Slaughter Videotape",
+                "description": "[[This Tape Sucks]]<br\/>Multiple possible spawns in this area. ",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "28"
+        },
+        {
+            "categoryId": "spawn_boss",
+            "position": [
+                2465,
+                1818
+            ],
+            "popup": {
+                "title": "Shadow of Tagilla Boss Spawn",
+                "description": "[[Shadow of Tagilla]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "29"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                1041.8052659963823,
+                2817.8205230283916
+            ],
+            "popup": {
+                "title": "Chamber 3 Door",
+                "description": "Requires: [[Key 03]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "30"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                3539,
+                2829
+            ],
+            "popup": {
+                "title": "Chamber 1 Door",
+                "description": "Requires: [[Key 01]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "31"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                453,
+                1888
+            ],
+            "popup": {
+                "title": "Chamber 2 Door",
+                "description": "Requires: [[Key 02]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "32"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                3693.102142055342,
+                1249.2809056613328
+            ],
+            "popup": {
+                "title": "Chamber 4 Door",
+                "description": "Requires: [[Key 04]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "33"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                2065.6958851545032,
+                2015.2543263816603
+            ],
+            "popup": {
+                "title": "Corpse Room Key",
+                "description": "[[Corpse room key]]<br\/>On the footwell",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "34"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                2950.9935752000606,
+                1626.7875384673007
+            ],
+            "popup": {
+                "title": "Corpse Room Key",
+                "description": "[[Corpse room key]]<br\/>On the package with candles",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "35"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3423.9596234662126,
+                1802.7687386351029
+            ],
+            "popup": {
+                "title": "Corpse Room Key",
+                "description": "[[Corpse room key]]<br\/>On the package inside another package",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "36"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                2564,
+                1687
+            ],
+            "popup": {
+                "title": "Corpse Room Key",
+                "description": "[[Corpse room key]]<br\/>On the gas cylinder",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "37"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3187.5207935069607,
+                2385.7782797234113
+            ],
+            "popup": {
+                "title": "Corpse Room Key",
+                "description": "[[Corpse room key]]<br\/>On a package",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "38"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1706.4856403117371,
+                1863.933475207739
+            ],
+            "popup": {
+                "title": "Corpse Room Key",
+                "description": "[[Corpse room key]]<br\/>On the package with candles",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "39"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3758.2725420065,
+                3227.9424561165893
+            ],
+            "popup": {
+                "title": "Key 01",
+                "description": "[[Key 01]]<br\/>On the shovel on the ground",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "40"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3750.1408140228546,
+                2580.939751330898
+            ],
+            "popup": {
+                "title": "Key 01",
+                "description": "[[Key 01]]<br\/>On the blue gas cylinder",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "41"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3592.1024484276613,
+                2946.337180509047
+            ],
+            "popup": {
+                "title": "Key 01",
+                "description": "[[Key 01]]<br\/>On the pipes",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "42"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3600.5877298019,
+                3303.60288170355
+            ],
+            "popup": {
+                "title": "Key 01",
+                "description": "[[Key 01]]<br\/>On the ladder",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "43"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3938,
+                2923.886540206374
+            ],
+            "popup": {
+                "title": "Key 01",
+                "description": "[[Key 01]]<br\/>Behind the boiler",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "44"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3718,
+                2602
+            ],
+            "popup": {
+                "title": "Key 01",
+                "description": "[[Key 01]]<br\/>On the pipes",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "45"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                377.94857454420963,
+                1857.9230675676536
+            ],
+            "popup": {
+                "title": "Key 02",
+                "description": "[[Key 02]]<br\/>On the package",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "46"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                371,
+                1683
+            ],
+            "popup": {
+                "title": "Key 02",
+                "description": "[[Key 02]]<br\/>On the red wooden box",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "47"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                516,
+                1562
+            ],
+            "popup": {
+                "title": "Key 02",
+                "description": "[[Key 02]]<br\/>On the metal bar in the rubble",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "48"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                520.430590953299,
+                1807.0997676698703
+            ],
+            "popup": {
+                "title": "Key 02",
+                "description": "[[Key 02]]<br\/>In the bucket",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "49"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1079,
+                2829.85
+            ],
+            "popup": {
+                "title": "Key 03",
+                "description": "[[Key 03]]<br\/>In the blue trash bag",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "50"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1076.5,
+                3282.5
+            ],
+            "popup": {
+                "title": "Key 03",
+                "description": "[[Key 03]]<br\/>Next to the candles at the wooden beam",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "51"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1060.35,
+                2828.5
+            ],
+            "popup": {
+                "title": "Key 03",
+                "description": "[[Key 03]]<br\/>In the broken bottle on the ground",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "52"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1111.75,
+                3508.75
+            ],
+            "popup": {
+                "title": "Key 03",
+                "description": "[[Key 03]]<br\/>In the hand of the dead Scav",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "53"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3600,
+                1162.483548270684
+            ],
+            "popup": {
+                "title": "Key 04",
+                "description": "[[Key 04]]<br\/>On the ground next to the door frame",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "54"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3661.398912983943,
+                1193.596246642892
+            ],
+            "popup": {
+                "title": "Key 04",
+                "description": "[[Key 04]]<br\/>On the barrel next to the door frame",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "55"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3528.4628381208718,
+                1038
+            ],
+            "popup": {
+                "title": "Key 04",
+                "description": "[[Key 04]]<br\/>In the fallen over bottle on the ground",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "56"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3518.5633431842602,
+                1054
+            ],
+            "popup": {
+                "title": "Key 04",
+                "description": "[[Key 04]]<br\/>In the standing bottle on the ground",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "57"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3669.530640967588,
+                1037.2372596530167
+            ],
+            "popup": {
+                "title": "Key 04",
+                "description": "[[Key 04]]<br\/>On the pallets",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "58"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3545.433400869349,
+                1006.9200564096436
+            ],
+            "popup": {
+                "title": "Key 04",
+                "description": "[[Key 04]]<br\/>On the scale",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "59"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                269.8496253703162,
+                1648.801440851775
+            ],
+            "popup": {
+                "title": "Valve Handwheel",
+                "description": "[[Valve handwheel]]<br\/>On the metal shelf",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "60"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                115.96551211459379,
+                1636.6922372239553
+            ],
+            "popup": {
+                "title": "Valve Handwheel",
+                "description": "[[Valve handwheel]]<br\/>Next to the stacked metal shelves",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "61"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                235.5,
+                1496.75
+            ],
+            "popup": {
+                "title": "Valve Handwheel",
+                "description": "[[Valve handwheel]]<br\/>On the ventilation shaft",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "62"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                276.92069318218165,
+                1899.3824064347577
+            ],
+            "popup": {
+                "title": "Valve Handwheel",
+                "description": "[[Valve handwheel]]<br\/>Tucked in the ventilation shaft",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "63"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                243,
+                2178.7779733510924
+            ],
+            "popup": {
+                "title": "Valve Handwheel",
+                "description": "[[Valve handwheel]]<br\/>In the corner next to the stairs",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "64"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1077,
+                2742
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>In the paint bucket",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "65"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                900.146932450475,
+                2783.172290750251
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>Behind the grate door",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "66"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                955.3012613830257,
+                2986.11193695079
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>Between the wooden crates",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "67"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1004.0916292848974,
+                3037.0236251962215
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>Next the wooden beam with candles",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "68"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                955,
+                3183
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>Behind the scale",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "69"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3138.1398949058976,
+                736.0981592151959
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>Between the barrels on the pallets",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "70"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3067.429216787243,
+                549.4219689819474
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>On the ground in the scrap",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "71"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3155.110457654375,
+                504.8742417671949
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>On the ground in the scrap next to the first wooden beam",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "72"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3476.8440430942537,
+                688.0148980945107
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>Inside a paint bucket",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "73"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3175.6165543087845,
+                801.8590898655449
+            ],
+            "popup": {
+                "title": "BBQ-S43 Gas Torch",
+                "description": "[[BBQ-S43 gas torch]]<br\/>On the ground in the scrap ",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "74"
+        },
+        {
+            "categoryId": "locked",
+            "position": [
+                1822.9212818989195,
+                1487.752667616496
+            ],
+            "popup": {
+                "title": "Observation Room",
+                "description": "Requires: [[Observation room key]]",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "75"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                2688.4199820712533,
+                1415.627775935468
+            ],
+            "popup": {
+                "title": "Observation Room Key",
+                "description": "[[Observation room key]]<br\/>In the hand of the lab technician",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "76"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                3295.1176003293112,
+                2351.8371542264567
+            ],
+            "popup": {
+                "title": "Observation Room Key",
+                "description": "[[Observation room key]]<br\/>In the hand of the lab technician",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "77"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1566.2415203282026,
+                1827.1639225860388
+            ],
+            "popup": {
+                "title": "Observation Room Key",
+                "description": "[[Observation room key]]<br\/>In the hand of the lab technician",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "78"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                2596,
+                2042
+            ],
+            "popup": {
+                "title": "Observation Room Key",
+                "description": "[[Observation room key]]<br\/>In the hand of the lab technician",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "79"
+        },
+        {
+            "categoryId": "loot_key",
+            "position": [
+                1916.9664837967302,
+                1967.8781720421616
+            ],
+            "popup": {
+                "title": "Observation Room Key",
+                "description": "[[Observation room key]]<br\/>In the hand of the lab technician",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "80"
+        }
+    ],
+    "markerProgress": false
+}

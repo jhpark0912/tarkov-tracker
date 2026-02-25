@@ -24,7 +24,10 @@ export default function MapViewPage() {
   const [popup, setPopup] = useState<MarkerPopup | null>(null);
   const [svgContent, setSvgContent] = useState<string | null>(null);
   const [svgViewBox, setSvgViewBox] = useState<{ w: number; h: number } | null>(null);
+  const [pngUrl, setPngUrl] = useState<string | null>(null);
+  const [pngNaturalSize, setPngNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [containerSize, setContainerSize] = useState<{ w: number; h: number } | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   // ── Zoom / pan state ────────────────────────────────────────────────────────
   const [zoom, setZoom] = useState(1);
@@ -71,18 +74,19 @@ export default function MapViewPage() {
     return () => obs.disconnect();
   }, [currentMap]);
 
-  const svgBounds = useMemo(() => {
-    if (!svgViewBox || !containerSize) return null;
-    const scale = Math.min(containerSize.w / svgViewBox.w, containerSize.h / svgViewBox.h);
-    const rW = svgViewBox.w * scale;
-    const rH = svgViewBox.h * scale;
+  const mapBounds = useMemo(() => {
+    const viewSize = svgViewBox ?? pngNaturalSize;
+    if (!viewSize || !containerSize) return null;
+    const scale = Math.min(containerSize.w / viewSize.w, containerSize.h / viewSize.h);
+    const rW = viewSize.w * scale;
+    const rH = viewSize.h * scale;
     return {
       left: (containerSize.w - rW) / 2,
       top: (containerSize.h - rH) / 2,
       width: rW,
       height: rH,
     };
-  }, [svgViewBox, containerSize]);
+  }, [svgViewBox, pngNaturalSize, containerSize]);
 
   // ── 데이터 로딩 ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -102,16 +106,27 @@ export default function MapViewPage() {
     setSelectedFloor(currentMap.defaultFloor ?? currentMap.floors[0]?.floorId ?? null);
     fetchMarkers(currentMap.id);
     if (currentMap.svgFile) {
-      fetch(`/maps/${currentMap.svgFile}`)
-        .then((r) => r.text())
-        .then((text) => {
-          const fixed = text.replace(
-            /<svg\b([^>]*?)(\s+width="[^"]*")?(\s+height="[^"]*")?([^>]*)>/,
-            '<svg$1$4 preserveAspectRatio="xMidYMid meet">'
-          );
-          setSvgContent(fixed);
-        })
-        .catch(() => setSvgContent(null));
+      if (currentMap.svgFile.endsWith('.png')) {
+        setPngUrl(`/maps/${currentMap.svgFile}`);
+        setSvgContent(null);
+      } else {
+        setPngUrl(null);
+        setPngNaturalSize(null);
+        fetch(`/maps/${currentMap.svgFile}`)
+          .then((r) => r.text())
+          .then((text) => {
+            const fixed = text.replace(
+              /<svg\b([^>]*?)(\s+width="[^"]*")?(\s+height="[^"]*")?([^>]*)>/,
+              '<svg$1$4 preserveAspectRatio="xMidYMid meet">'
+            );
+            setSvgContent(fixed);
+          })
+          .catch(() => setSvgContent(null));
+      }
+    } else {
+      setSvgContent(null);
+      setPngUrl(null);
+      setPngNaturalSize(null);
     }
   }, [currentMap, fetchMarkers]);
 
@@ -236,9 +251,9 @@ export default function MapViewPage() {
 
   // 팝업 위치: zoomable 레이어 밖, 화면 좌표로 변환
   const popupScreenPos = useMemo(() => {
-    if (!popup || !svgBounds || !containerSize) return null;
-    const wx = svgBounds.left + (popup.marker.positionX! / 100) * svgBounds.width;
-    const wy = svgBounds.top + (popup.marker.positionY! / 100) * svgBounds.height;
+    if (!popup || !mapBounds || !containerSize) return null;
+    const wx = mapBounds.left + (popup.marker.positionX! / 100) * mapBounds.width;
+    const wy = mapBounds.top + (popup.marker.positionY! / 100) * mapBounds.height;
     const sx = pan.x + wx * zoom;
     const sy = pan.y + wy * zoom;
     const POPUP_W = 224;
@@ -246,7 +261,7 @@ export default function MapViewPage() {
       x: Math.min(Math.max(sx, POPUP_W / 2 + 8), containerSize.w - POPUP_W / 2 - 8),
       y: sy,
     };
-  }, [popup, svgBounds, pan, zoom, containerSize]);
+  }, [popup, mapBounds, pan, zoom, containerSize]);
 
   // ── Loading / error ──────────────────────────────────────────────────────────
   if (loading) {
@@ -338,7 +353,7 @@ export default function MapViewPage() {
                 transformOrigin: '0 0',
               }}
             >
-              {/* SVG */}
+              {/* SVG map */}
               {svgHtml && (
                 <div
                   ref={svgRef}
@@ -346,17 +361,34 @@ export default function MapViewPage() {
                   dangerouslySetInnerHTML={svgHtml}
                 />
               )}
-              {!svgHtml && (
+
+              {/* PNG map */}
+              {pngUrl && (
+                <img
+                  ref={imgRef}
+                  src={pngUrl}
+                  alt={currentMap.name}
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                  draggable={false}
+                  onLoad={() => {
+                    if (imgRef.current) {
+                      setPngNaturalSize({ w: imgRef.current.naturalWidth, h: imgRef.current.naturalHeight });
+                    }
+                  }}
+                />
+              )}
+
+              {!svgHtml && !pngUrl && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <p className="text-6xl font-light text-elevated/20 select-none">{currentMap.name}</p>
                 </div>
               )}
 
               {/* Markers — 모든 층 표시, 거리에 따라 블러 */}
-              {svgBounds && visibleMarkers.map((marker) => {
+              {mapBounds && visibleMarkers.map((marker) => {
                 const dist = getFloorDistance(marker.floorId);
-                const ml = svgBounds.left + (marker.positionX! / 100) * svgBounds.width;
-                const mt = svgBounds.top + (marker.positionY! / 100) * svgBounds.height;
+                const ml = mapBounds.left + (marker.positionX! / 100) * mapBounds.width;
+                const mt = mapBounds.top + (marker.positionY! / 100) * mapBounds.height;
                 return (
                   <div
                     key={marker.objectiveId}

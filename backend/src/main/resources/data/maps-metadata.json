@@ -79,6 +79,22 @@
       { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
     ]
   },
+  "terminal": {
+    "svgFile": "terminal.png",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
+  "the-labyrinth": {
+    "svgFile": "labyrinth.png",
+    "defaultFloor": "Ground_Level",
+    "coordinateRotation": 0,
+    "floors": [
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+    ]
+  },
   "ground-zero": {
     "aliases": ["ground-zero-21"],
     "svgFile": "ground-zero.svg",

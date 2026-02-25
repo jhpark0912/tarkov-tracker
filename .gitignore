@@ -18,6 +18,9 @@ Thumbs.db
 *.png
 *.jpg
 *.jpeg
+# 맵 이미지 파일은 추적
+!frontend/public/maps/*.png
+!frontend/public/maps/*.jpg
 
 # Backend
 backend/build/

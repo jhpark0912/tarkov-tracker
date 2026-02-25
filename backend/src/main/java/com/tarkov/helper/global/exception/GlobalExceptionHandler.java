@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGeneral(Exception e) {
-        logger.debug("처리되지 않은 예외: {}", e.getMessage(), e);
+        logger.error("처리되지 않은 예외: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "서버 내부 오류가 발생했습니다"));
     }
