@@ -166,21 +166,22 @@ interface StoryStore {
 
 ## 구현 순서 (예정)
 
-### Step 1 — 데이터 + 프론트엔드 기본
-- [ ] 스토리 챕터 JSON 데이터 확정 (위키 기반 검증)
-- [ ] StoryFlowPage 레이아웃 개선 (잘리는 노드 해결, 반응형)
-- [ ] 사이드바에 "메인 스토리" 메뉴 추가
+### Step 1 — 데이터 + 프론트엔드 기본 (완료)
+- [x] 스토리 챕터 JSON 데이터 확정 → `data/storyData.ts` + `types/story.ts`
+- [x] StoryFlowPage 레이아웃 개선 (SVG viewBox, min-w-0, useMemo 엣지, 엔딩 상세 패널)
+- [x] 사이드바에 "메인 스토리" 메뉴 추가 + Header 타이틀
 
-### Step 2 — Backend 도메인
-- [ ] StoryChapter 데이터 로딩 (JSON → 메모리 or DB)
-- [ ] UserStoryProgress 엔티티 + 리포지토리
-- [ ] StoryService + StoryController API
+### Step 2 — Backend 도메인 (완료)
+- [x] StoryChapter 데이터 로딩 (JSON → @PostConstruct 메모리 캐시)
+- [x] UserStoryProgress 엔티티 + 리포지토리
+- [x] StoryService + StoryController API
+- [x] SecurityConfig — /api/v1/story/progress/** authenticated
 
-### Step 3 — 프론트엔드 연동
-- [ ] storyStore (Zustand)
-- [ ] storyApi (REST 호출)
-- [ ] 챕터 상태 변경 UI (완료 체크, 분기 선택)
-- [ ] 엔딩 예측 표시
+### Step 3 — 프론트엔드 연동 (완료)
+- [x] storyStore (Zustand)
+- [x] storyApi (REST 호출)
+- [x] 챕터 상태 변경 UI (진행 시작/완료 처리 버튼, 분기 선택 클릭)
+- [x] 진행률 카운터 + 초기화 + 비로그인 안내
 
 ### Step 4 — 추가 개선
 - [ ] 엔딩 달성 시 보상 표시

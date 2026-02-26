@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ScrollText,
+  BookOpen,
   Map,
   LogIn,
   Settings,
@@ -21,6 +22,7 @@ import { adminApi, type SyncResult } from '../../api/adminApi';
 const navItems = [
   { icon: LayoutDashboard, label: '대시보드', path: '/' },
   { icon: ScrollText, label: '퀘스트', path: '/quests' },
+  { icon: BookOpen, label: '메인 스토리', path: '/story' },
 ];
 
 const allMaps = [

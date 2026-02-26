@@ -6,6 +6,7 @@ import DebugOverlay from '../debug/DebugOverlay';
 const pageTitles: Record<string, string> = {
   '/': '대시보드',
   '/quests': '퀘스트',
+  '/story': '메인 스토리',
   '/map': '맵',
   '/settings': '설정',
   '/login': '로그인',

@@ -109,7 +109,7 @@
 
 ---
 
-### Phase 4 — 메인 스토리 퀘스트 (진행 중)
+### Phase 4 — 메인 스토리 퀘스트 (Step 1~3 완료)
 
 **설계 문서**: `.claude/story-quest-design.md` (상세 스펙)
 
@@ -119,22 +119,37 @@
 - UI: **SVG 플로우차트** (분기형 스토리 흐름 시각화)
 - 추적 수준: **챕터 단위 완료 체크** + 분기 선택 기록
 
-**프로토타입 완료**
-- `frontend/src/features/story/StoryFlowPage.tsx` — SVG 플로우차트 프로토타입
-- 라우트: `/story` (App.tsx에 추가됨)
-- 9개 챕터 + 4개 엔딩 + 분기 선택지 + 상세 패널
+#### Step 1 — 데이터 분리 + UI 개선 (완료)
+- types/story.ts — ChapterStatus, StoryChapter, StoryChoice, StoryEnding, StoryProgress
+- data/storyData.ts — 9개 챕터 + 4개 엔딩 + CHAPTER_MAP/ENDING_MAP
+- StoryFlowPage.tsx — 하드코딩 데이터 제거, import 분리, useMemo 엣지, 엔딩 상세 패널
+- Sidebar.tsx — BookOpen 아이콘 + "메인 스토리" 메뉴 (/story)
+- Header.tsx — pageTitles에 '/story': '메인 스토리' 추가
 
-**남은 작업** → `.claude/story-quest-design.md` "구현 순서" 섹션 참조
-- Step 1: 데이터 확정 + 레이아웃 개선 + 사이드바 메뉴
-- Step 2: Backend 도메인 (UserStoryProgress)
-- Step 3: 프론트엔드 연동 (storyStore, storyApi)
+#### Step 2 — Backend 도메인 (완료)
+- story-chapters.json — 9개 챕터 + 4개 엔딩 정적 데이터 (resources/data/)
+- ChapterStatus enum — LOCKED, AVAILABLE, IN_PROGRESS, COMPLETED
+- UserStoryProgress 엔티티 — user × chapterId (unique), status, choiceId
+- UserStoryProgressRepository — findAllByUserId, findByUserIdAndChapterId, deleteAllByUserId
+- StoryDataLoader — @PostConstruct JSON 로딩 → 메모리 캐시
+- StoryService — getStoryData, getUserProgress, updateChapterProgress, resetProgress
+- StoryController — GET /chapters (공개), GET/PUT /progress (인증)
+- DTO 6개 — StoryChapterResponse, StoryEndingResponse, StoryDataResponse, StoryProgressResponse, StoryProgressUpdateRequest, ChapterProgressDto
+- SecurityConfig — /api/v1/story/progress/** authenticated 추가
+
+#### Step 3 — 프론트엔드 연동 (완료)
+- api/storyApi.ts — getChapters, getProgress, updateChapterProgress, resetProgress
+- store/storyStore.ts — Zustand (chapters, endings, progress, fetchChapters, fetchProgress, updateChapterStatus, resetProgress)
+- StoryFlowPage.tsx — storyStore 연동, 상태 변경 버튼 (진행 시작/완료 처리), 분기 선택 클릭, 초기화, 진행률 카운터, 비로그인 안내
+
+**남은 작업**
 - Step 4: 추가 개선 (엔딩 보상, 가이드, 반응형)
 
 ---
 
 ## 다음 단계
 
-1. **메인 스토리 Step 1** — 데이터 확정 + UI 개선
+1. **메인 스토리 Step 4** — 엔딩 보상 표시, 가이드/팁, 반응형 레이아웃
 2. **아이템 검색 API** — GET /api/v1/items?search=
 3. **관리자 기능** — 동기화 이력 UI
 4. **기타 UX 개선** — 사용자 피드백 기반
