@@ -41,6 +41,10 @@ public class Quest {
     private Boolean kappaRequired = false;
 
     @Builder.Default
+    @Column(name = "lightkeeper_required")
+    private Boolean lightkeeperRequired = false;
+
+    @Builder.Default
     @Column(name = "min_player_level")
     private Integer minPlayerLevel = 1;
 
@@ -68,11 +72,13 @@ public class Quest {
     private List<QuestObjective> objectives = new ArrayList<>();
 
     public void update(String name, Trader trader, GameMap map, Boolean kappaRequired,
+                       Boolean lightkeeperRequired,
                        Integer minPlayerLevel, String wikiLink, String taskImageLink, Integer experience) {
         this.name = name;
         this.trader = trader;
         this.map = map;
         this.kappaRequired = kappaRequired;
+        this.lightkeeperRequired = lightkeeperRequired;
         this.minPlayerLevel = minPlayerLevel;
         this.wikiLink = wikiLink;
         this.taskImageLink = taskImageLink;

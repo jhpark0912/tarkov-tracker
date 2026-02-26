@@ -1,7 +1,8 @@
 package com.tarkov.helper.domain.story.service;
 
 import com.tarkov.helper.domain.auth.entity.User;
-import com.tarkov.helper.domain.story.dto.*;
+import com.tarkov.helper.domain.story.dto.StoryProgressResponse;
+import com.tarkov.helper.domain.story.dto.StoryProgressUpdateRequest;
 import com.tarkov.helper.domain.story.entity.ChapterStatus;
 import com.tarkov.helper.domain.story.entity.UserStoryProgress;
 import com.tarkov.helper.domain.story.repository.UserStoryProgressRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -19,18 +21,18 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StoryService {
 
-    private final StoryDataLoader storyDataLoader;
-    private final UserStoryProgressRepository progressRepository;
+    /** 기존 챕터 ID (하위 호환) */
+    private static final Set<String> VALID_CHAPTER_IDS = Set.of(
+            "tour", "falling_skies", "the_ticket",
+            "they_are_already_here", "batya", "blue_fire",
+            "the_labyrinth", "accidental_witness", "the_unheard"
+    );
 
-    /**
-     * 스토리 챕터 + 엔딩 정적 데이터 조회
-     */
-    public StoryDataResponse getStoryData() {
-        return new StoryDataResponse(
-                storyDataLoader.getChapters(),
-                storyDataLoader.getEndings()
-        );
-    }
+    /** 새 노드 ID 패턴 (tour_01, fs_02, ...) */
+    private static final java.util.regex.Pattern NODE_ID_PATTERN =
+            java.util.regex.Pattern.compile("^(tour|fs|tt|ta|bt|bf|lb|aw|tu|ending)_\\w+$");
+
+    private final UserStoryProgressRepository progressRepository;
 
     /**
      * 사용자 스토리 진행 상태 조회
@@ -56,8 +58,8 @@ public class StoryService {
     public StoryProgressResponse.ChapterProgressDto updateChapterProgress(
             User user, String chapterId, ChapterStatus status, String choiceId) {
 
-        if (!storyDataLoader.isValidChapterId(chapterId)) {
-            throw new ResourceNotFoundException("존재하지 않는 챕터입니다: " + chapterId);
+        if (!VALID_CHAPTER_IDS.contains(chapterId) && !NODE_ID_PATTERN.matcher(chapterId).matches()) {
+            throw new ResourceNotFoundException("존재하지 않는 챕터/노드입니다: " + chapterId);
         }
 
         UserStoryProgress progress = progressRepository

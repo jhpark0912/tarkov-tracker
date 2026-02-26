@@ -7,6 +7,7 @@ interface QuestFilters {
   trader: string;
   map: string;
   kappaOnly: boolean;
+  lightkeeperOnly: boolean;
 }
 
 interface QuestStore {
@@ -25,7 +26,7 @@ interface QuestStore {
 export const useQuestStore = create<QuestStore>((set) => ({
   quests: [],
   currentDetail: null,
-  filters: { search: '', trader: '', map: '', kappaOnly: false },
+  filters: { search: '', trader: '', map: '', kappaOnly: false, lightkeeperOnly: false },
   loading: false,
   error: null,
 

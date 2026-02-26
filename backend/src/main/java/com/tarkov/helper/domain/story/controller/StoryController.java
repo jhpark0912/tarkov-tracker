@@ -1,7 +1,6 @@
 package com.tarkov.helper.domain.story.controller;
 
 import com.tarkov.helper.domain.auth.entity.User;
-import com.tarkov.helper.domain.story.dto.StoryDataResponse;
 import com.tarkov.helper.domain.story.dto.StoryProgressResponse;
 import com.tarkov.helper.domain.story.dto.StoryProgressUpdateRequest;
 import com.tarkov.helper.domain.story.service.StoryService;
@@ -17,15 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class StoryController {
 
     private final StoryService storyService;
-
-    /**
-     * 스토리 챕터 + 엔딩 정적 데이터 조회 (비인증 허용)
-     * GET /api/v1/story/chapters
-     */
-    @GetMapping("/chapters")
-    public ResponseEntity<StoryDataResponse> getStoryData() {
-        return ResponseEntity.ok(storyService.getStoryData());
-    }
 
     /**
      * 사용자 스토리 진행 상태 조회

@@ -8,9 +8,12 @@ import { useAuthStore } from './store/authStore';
 import DashboardPage from './features/dashboard/DashboardPage';
 import QuestListPage from './features/quests/QuestListPage';
 import QuestDetailPage from './features/quests/QuestDetailPage';
+import QuestTreePage from './features/quests/QuestTreePage';
 import MapSelectPage from './features/map/MapSelectPage';
 import MapViewPage from './features/map/MapViewPage';
-import StoryFlowPage from './features/story/StoryFlowPage';
+import DecisionMapPage from './features/story/DecisionMapPage';
+import EndingPathPage from './features/story/EndingPathPage';
+import FullMapPage from './features/story/FullMapPage';
 import LoginPage from './features/auth/LoginPage';
 import SignupPage from './features/auth/SignupPage';
 
@@ -29,10 +32,13 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/quests" element={<QuestListPage />} />
+          <Route path="/quests/tree/:type" element={<QuestTreePage />} />
           <Route path="/quests/:id" element={<QuestDetailPage />} />
           <Route path="/map" element={<MapSelectPage />} />
           <Route path="/map/:normalizedName" element={<MapViewPage />} />
-          <Route path="/story" element={<StoryFlowPage />} />
+          <Route path="/story" element={<DecisionMapPage />} />
+          <Route path="/story/full" element={<FullMapPage />} />
+          <Route path="/story/:endingId" element={<EndingPathPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route

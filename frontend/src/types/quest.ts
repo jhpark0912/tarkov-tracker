@@ -48,6 +48,7 @@ export interface QuestListItem {
   trader: TraderRef;
   mapName: string | null;
   kappaRequired: boolean;
+  lightkeeperRequired: boolean;
   minPlayerLevel: number;
   objectiveCount: number;
   requiredItemCount: number;
@@ -60,6 +61,7 @@ export interface QuestDetail {
   trader: TraderRef;
   map: MapRef | null;
   kappaRequired: boolean;
+  lightkeeperRequired: boolean;
   minPlayerLevel: number;
   wikiLink: string | null;
   taskImageLink: string | null;

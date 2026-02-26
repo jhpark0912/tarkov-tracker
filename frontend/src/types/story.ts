@@ -19,6 +19,8 @@ export interface StoryChapter {
   row: number;
   wikiUrl?: string;
   tip?: string;
+  quests?: string[];
+  dealers?: string[];
 }
 
 export interface StoryEnding {

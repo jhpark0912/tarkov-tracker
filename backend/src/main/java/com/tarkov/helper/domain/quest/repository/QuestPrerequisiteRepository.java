@@ -18,4 +18,21 @@ public interface QuestPrerequisiteRepository extends JpaRepository<QuestPrerequi
 
     @Query("SELECT p FROM QuestPrerequisite p LEFT JOIN FETCH p.prereqQuest WHERE p.quest = :quest")
     List<QuestPrerequisite> findByQuestWithPrereqs(@Param("quest") Quest quest);
+
+    @Query("SELECT p FROM QuestPrerequisite p " +
+            "LEFT JOIN FETCH p.quest q " +
+            "LEFT JOIN FETCH q.trader " +
+            "LEFT JOIN FETCH q.map " +
+            "WHERE p.prereqQuest = :prereqQuest AND q.removed = false")
+    List<QuestPrerequisite> findByPrereqQuest(@Param("prereqQuest") Quest prereqQuest);
+
+    @Query("SELECT p FROM QuestPrerequisite p " +
+            "LEFT JOIN FETCH p.quest q " +
+            "LEFT JOIN FETCH p.prereqQuest pq " +
+            "LEFT JOIN FETCH q.trader " +
+            "LEFT JOIN FETCH q.map " +
+            "LEFT JOIN FETCH pq.trader " +
+            "LEFT JOIN FETCH pq.map " +
+            "WHERE q.removed = false AND pq.removed = false")
+    List<QuestPrerequisite> findAllWithDetails();
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Crown, ExternalLink, MapPin, Check, Circle, Package, Loader2 } from 'lucide-react';
+import { ArrowLeft, Crown, Compass, ExternalLink, MapPin, Check, Circle, Package, Loader2, GitBranch } from 'lucide-react';
 import * as Progress from '@radix-ui/react-progress';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import { cn } from '../../utils/cn';
@@ -9,6 +9,7 @@ import { useQuestStore } from '../../store/questStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useAuthStore } from '../../store/authStore';
 import type { QuestStatus } from '../../types/progress';
+import QuestPrereqTree from './components/QuestPrereqTree';
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   COMPLETED:   { bg: 'bg-complete/20',  text: 'text-complete',  label: '완료' },
@@ -102,6 +103,7 @@ export default function QuestDetailPage() {
                   <div className="flex items-center gap-2">
                     <h1 className="text-2xl font-semibold text-text">{quest.name}</h1>
                     {quest.kappaRequired && <Crown size={16} className="text-gold" />}
+                    {quest.lightkeeperRequired && <Compass size={16} className="text-accent" />}
                   </div>
                   <div className="flex items-center gap-3 text-sm text-text-secondary mt-1 flex-wrap">
                     <span>{quest.trader?.name}</span>
@@ -257,11 +259,22 @@ export default function QuestDetailPage() {
           </DebugOverlay>
 
           <div className="space-y-6">
-            {/* Prerequisites */}
+            {/* Prerequisites — React Flow 미니 트리 */}
             {quest.prerequisites.length > 0 && (
               <DebugOverlay id="quest-prerequisites" tag="div" label="QuestPrerequisites" variant="component">
                 <div id="quest-prerequisites" className="bg-surface rounded-2xl p-6 border border-border">
-                  <h2 className="text-base font-semibold text-text mb-4">선행 퀘스트</h2>
+                  <div className="flex items-center gap-2 mb-4">
+                    <GitBranch size={16} className="text-text-muted" />
+                    <h2 className="text-base font-semibold text-text">선행 퀘스트 트리</h2>
+                  </div>
+                  {/* 미니 React Flow 트리 */}
+                  <div className="bg-surface-alt rounded-xl overflow-hidden border border-border/50 mb-3">
+                    <QuestPrereqTree
+                      questId={questId}
+                      onNodeClick={(id) => { if (id !== questId) window.location.href = `/quests/${id}`; }}
+                    />
+                  </div>
+                  {/* 리스트 폴백 */}
                   <div className="space-y-2">
                     {quest.prerequisites.map(p => {
                       const preStatus = questStatuses[String(p.id)] ?? 'NOT_STARTED';

@@ -14,6 +14,7 @@ public class TarkovTaskDto {
     private String id;
     private String name;
     private Boolean kappaRequired;
+    private Boolean lightkeeperRequired;
     private Integer minPlayerLevel;
     private String wikiLink;
     private String taskImageLink;

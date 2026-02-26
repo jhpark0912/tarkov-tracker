@@ -20,6 +20,7 @@ public class QuestDetail {
     private TraderInfo trader;
     private MapRef map;
     private Boolean kappaRequired;
+    private Boolean lightkeeperRequired;
     private Integer minPlayerLevel;
     private String wikiLink;
     private String taskImageLink;
@@ -85,6 +86,7 @@ public class QuestDetail {
                         .normalizedName(quest.getMap().getNormalizedName())
                         .build() : null)
                 .kappaRequired(quest.getKappaRequired())
+                .lightkeeperRequired(quest.getLightkeeperRequired())
                 .minPlayerLevel(quest.getMinPlayerLevel())
                 .wikiLink(quest.getWikiLink())
                 .taskImageLink(quest.getTaskImageLink())

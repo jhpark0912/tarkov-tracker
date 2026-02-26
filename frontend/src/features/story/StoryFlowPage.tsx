@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   BookOpen, Check, Circle, GitBranch, Star, Play, RotateCcw,
-  LogIn, ExternalLink, Lightbulb, Trophy, Target,
+  LogIn, ExternalLink, Lightbulb, Trophy, Target, Swords, Users,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../utils/cn';
@@ -219,6 +219,41 @@ function ChapterDetail({
           ))}
         </div>
       </div>
+
+      {/* 관련 딜러 */}
+      {chapter.dealers && chapter.dealers.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 mb-1">
+            <Users className="w-3.5 h-3.5 text-text-muted" />
+            <span className="text-xs font-medium text-text-muted">관련 딜러</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {chapter.dealers.map((d) => (
+              <span key={d} className="text-[11px] px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
+                {d}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 퀘스트 목록 */}
+      {chapter.quests && chapter.quests.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 mb-2">
+            <Swords className="w-3.5 h-3.5 text-text-muted" />
+            <span className="text-xs font-medium text-text-muted">퀘스트 목록 ({chapter.quests.length}개)</span>
+          </div>
+          <ol className="space-y-1 pl-1">
+            {chapter.quests.map((quest, idx) => (
+              <li key={idx} className="flex gap-2 text-[11px] leading-relaxed">
+                <span className="text-text-muted shrink-0 w-4 text-right">{idx + 1}.</span>
+                <span className="text-text-secondary">{quest}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {/* 팁 */}
       {chapter.tip && (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Crown, ChevronRight, List, GitBranch, ChevronDown, Check, Circle, Loader2 } from 'lucide-react';
+import { Search, Crown, ChevronRight, List, GitBranch, ChevronDown, Check, Circle, Loader2, Compass } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useQuestStore } from '../../store/questStore';
@@ -52,6 +52,7 @@ function QuestTreeNode({ node, depth, userStatus }: { node: TreeNode; depth: num
         <div className="flex items-center gap-2">
           <span className={cn('text-sm font-medium truncate', isCompleted ? 'text-text-muted line-through' : 'text-text')}>{quest.name}</span>
           {quest.kappaRequired && <Crown size={12} className="text-gold flex-shrink-0" />}
+          {quest.lightkeeperRequired && <Compass size={12} className="text-accent flex-shrink-0" />}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {quest.mapName && <span className="text-[10px] text-text-muted">{quest.mapName}</span>}
@@ -103,6 +104,7 @@ export default function QuestListPage() {
   const [traderFilter, setTraderFilter] = useState('');
   const [mapFilter, setMapFilter] = useState('');
   const [kappaOnly, setKappaOnly] = useState(false);
+  const [lightkeeperOnly, setLightkeeperOnly] = useState(false);
 
   const { quests, loading, error, fetchList } = useQuestStore();
   const { questStatuses, fetchProgress } = useProgressStore();
@@ -122,9 +124,10 @@ export default function QuestListPage() {
       if (traderFilter && q.trader?.name !== traderFilter) return false;
       if (mapFilter && q.mapName !== mapFilter) return false;
       if (kappaOnly && !q.kappaRequired) return false;
+      if (lightkeeperOnly && !q.lightkeeperRequired) return false;
       return true;
     });
-  }, [quests, search, traderFilter, mapFilter, kappaOnly]);
+  }, [quests, search, traderFilter, mapFilter, kappaOnly, lightkeeperOnly]);
 
   const traders = useMemo(() => [...new Set(quests.map(q => q.trader?.name).filter(Boolean))].sort(), [quests]);
   const maps = useMemo(() => [...new Set(quests.map(q => q.mapName).filter(Boolean))].sort(), [quests]);
@@ -170,6 +173,12 @@ export default function QuestListPage() {
                   kappaOnly ? 'bg-gold/20 text-gold' : 'bg-surface-alt text-text-secondary hover:text-gold')}>
                 <Crown size={14} />카파
               </button>
+              <button
+                onClick={() => setLightkeeperOnly(!lightkeeperOnly)}
+                className={cn('flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm transition-colors cursor-pointer',
+                  lightkeeperOnly ? 'bg-accent/20 text-accent' : 'bg-surface-alt text-text-secondary hover:text-accent')}>
+                <Compass size={14} />등대지기
+              </button>
 
               <div className="flex items-center bg-surface-alt rounded-xl overflow-hidden">
                 <button onClick={() => setViewMode('list')} className={cn('flex items-center gap-1.5 px-3 py-2.5 text-sm transition-colors cursor-pointer', viewMode === 'list' ? 'bg-gold/20 text-gold' : 'text-text-muted hover:text-text')}>
@@ -182,6 +191,24 @@ export default function QuestListPage() {
             </div>
           </div>
         </DebugOverlay>
+
+        {/* 트리 시각화 네비게이션 */}
+        <div className="flex gap-3">
+          <Link
+            to="/quests/tree/kappa"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gold/30 bg-gold/5 text-sm text-gold hover:bg-gold/10 transition-colors no-underline"
+          >
+            <Crown size={16} />
+            카파 퀘스트 트리
+          </Link>
+          <Link
+            to="/quests/tree/lightkeeper"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-accent/30 bg-accent/5 text-sm text-accent hover:bg-accent/10 transition-colors no-underline"
+          >
+            <Compass size={16} />
+            등대지기 퀘스트 트리
+          </Link>
+        </div>
 
         {/* 로딩 / 에러 */}
         {loading && (
@@ -220,6 +247,7 @@ export default function QuestListPage() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-text">{quest.name}</span>
                         {quest.kappaRequired && <Crown size={12} className="text-gold flex-shrink-0" />}
+                        {quest.lightkeeperRequired && <Compass size={12} className="text-accent flex-shrink-0" />}
                       </div>
                     </div>
                     <div className="col-span-2 text-sm text-text-secondary">{quest.trader?.name}</div>

@@ -4,6 +4,7 @@ import com.tarkov.helper.domain.map.repository.GameMapRepository;
 import com.tarkov.helper.domain.quest.dto.QuestDetail;
 import com.tarkov.helper.domain.quest.dto.QuestListItem;
 import com.tarkov.helper.domain.quest.dto.QuestMapMarker;
+import com.tarkov.helper.domain.quest.dto.QuestTreeResponse;
 import com.tarkov.helper.domain.quest.service.QuestService;
 import com.tarkov.helper.global.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +29,9 @@ public class QuestController {
     public ResponseEntity<List<QuestListItem>> getQuestList(
             @RequestParam(required = false) String trader,
             @RequestParam(required = false) Boolean kappa,
+            @RequestParam(required = false) Boolean lightkeeper,
             @RequestParam(required = false) String map) {
-        return ResponseEntity.ok(questService.getQuestList(trader, kappa, map));
+        return ResponseEntity.ok(questService.getQuestList(trader, kappa, lightkeeper, map));
     }
 
     /**
@@ -53,5 +55,32 @@ public class QuestController {
         gameMapRepository.findById(mapId)
                 .orElseThrow(() -> new ResourceNotFoundException("맵을 찾을 수 없습니다: " + mapId));
         return ResponseEntity.ok(questService.getMapMarkers(mapId, floor));
+    }
+
+    /**
+     * 특정 퀘스트 선행 트리
+     * GET /api/v1/quests/{id}/tree
+     */
+    @GetMapping("/{id}/tree")
+    public ResponseEntity<QuestTreeResponse> getQuestTree(@PathVariable Long id) {
+        return ResponseEntity.ok(questService.getQuestTree(id));
+    }
+
+    /**
+     * 카파 퀘스트 전체 의존 그래프
+     * GET /api/v1/quests/tree/kappa
+     */
+    @GetMapping("/tree/kappa")
+    public ResponseEntity<QuestTreeResponse> getKappaTree() {
+        return ResponseEntity.ok(questService.getKappaTree());
+    }
+
+    /**
+     * 등대지기 퀘스트 전체 의존 그래프
+     * GET /api/v1/quests/tree/lightkeeper
+     */
+    @GetMapping("/tree/lightkeeper")
+    public ResponseEntity<QuestTreeResponse> getLightkeeperTree() {
+        return ResponseEntity.ok(questService.getLightkeeperTree());
     }
 }

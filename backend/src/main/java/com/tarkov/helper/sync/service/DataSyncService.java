@@ -258,6 +258,7 @@ public class DataSyncService {
                         .trader(trader)
                         .map(map)
                         .kappaRequired(Boolean.TRUE.equals(dto.getKappaRequired()))
+                        .lightkeeperRequired(Boolean.TRUE.equals(dto.getLightkeeperRequired()))
                         .minPlayerLevel(dto.getMinPlayerLevel() != null ? dto.getMinPlayerLevel() : 1)
                         .wikiLink(dto.getWikiLink())
                         .taskImageLink(dto.getTaskImageLink())
@@ -268,6 +269,7 @@ public class DataSyncService {
                 quest.update(
                         dto.getName(), trader, map,
                         Boolean.TRUE.equals(dto.getKappaRequired()),
+                        Boolean.TRUE.equals(dto.getLightkeeperRequired()),
                         dto.getMinPlayerLevel() != null ? dto.getMinPlayerLevel() : 1,
                         dto.getWikiLink(), dto.getTaskImageLink(),
                         dto.getExperience() != null ? dto.getExperience() : 0

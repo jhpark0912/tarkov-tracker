@@ -27,9 +27,11 @@ public interface QuestRepository extends JpaRepository<Quest, Long> {
             "WHERE q.removed = false " +
             "AND (:traderId IS NULL OR t.id = :traderId) " +
             "AND (:kappaRequired IS NULL OR q.kappaRequired = :kappaRequired) " +
+            "AND (:lightkeeperRequired IS NULL OR q.lightkeeperRequired = :lightkeeperRequired) " +
             "AND (:mapId IS NULL OR m.id = :mapId)")
     List<Quest> findWithFilters(@Param("traderId") Long traderId,
                                 @Param("kappaRequired") Boolean kappaRequired,
+                                @Param("lightkeeperRequired") Boolean lightkeeperRequired,
                                 @Param("mapId") Long mapId);
 
     @Query("SELECT q FROM Quest q " +
