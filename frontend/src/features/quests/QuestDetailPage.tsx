@@ -9,7 +9,25 @@ import { useQuestStore } from '../../store/questStore';
 import { useProgressStore } from '../../store/progressStore';
 import { useAuthStore } from '../../store/authStore';
 import type { QuestStatus } from '../../types/progress';
+import type { RequiredItem } from '../../types/quest';
 import QuestPrereqTree from './components/QuestPrereqTree';
+
+/** 목표의 총 수집량에서 각 아이템별 체크 상태를 유도 (순서대로 채움) */
+function getItemCheckedStates(requiredItems: RequiredItem[], totalCollected: number): boolean[] {
+  let remaining = totalCollected;
+  return requiredItems.map(ri => {
+    if (remaining >= ri.count) {
+      remaining -= ri.count;
+      return true;
+    }
+    return false;
+  });
+}
+
+/** 개별 아이템 체크 상태 배열 → 총 수집량 계산 */
+function computeTotalFromStates(requiredItems: RequiredItem[], states: boolean[]): number {
+  return requiredItems.reduce((sum, ri, i) => sum + (states[i] ? ri.count : 0), 0);
+}
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   COMPLETED:   { bg: 'bg-complete/20',  text: 'text-complete',  label: '완료' },
@@ -49,12 +67,27 @@ export default function QuestDetailPage() {
     }
   };
 
-  const handleItemCount = async (objectiveId: number, maxCount: number, delta: number) => {
-    if (!token) return;
-    const current = itemCounts[String(objectiveId)] ?? 0;
-    const next = Math.max(0, Math.min(maxCount, current + delta));
-    await updateItemCount(objectiveId, next);
-  };
+  const objectives = quest?.objectives ?? [];
+  const completedObjectives = objectives.filter(o => {
+    const collected = itemCounts[String(o.id)] ?? 0;
+    if (o.requiredItems.length > 0) {
+      const totalRequired = o.requiredItems.reduce((sum, ri) => sum + ri.count, 0);
+      return collected >= totalRequired;
+    }
+    return collected >= 1;
+  });
+
+  // 모든 목표 완료 시 퀘스트 자동 완료 / 하나라도 미완료 시 자동 해제
+  const allDone = objectives.length > 0 && completedObjectives.length === objectives.length;
+  useEffect(() => {
+    if (!token || !quest || statusUpdating) return;
+    if (allDone && userStatus !== 'COMPLETED') {
+      handleStatusChange('COMPLETED');
+    } else if (!allDone && userStatus === 'COMPLETED') {
+      handleStatusChange('IN_PROGRESS');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDone]);
 
   if (loading) {
     return (
@@ -72,15 +105,6 @@ export default function QuestDetailPage() {
       </div>
     );
   }
-
-  const completedObjectives = quest.objectives.filter(o => {
-    // 아이템 목표: itemCounts로 판단, 그 외는 퀘스트 완료 여부로
-    if (o.requiredItems.length > 0) {
-      const totalRequired = o.requiredItems.reduce((sum, ri) => sum + ri.count, 0);
-      return (itemCounts[String(o.id)] ?? 0) >= totalRequired;
-    }
-    return userStatus === 'COMPLETED';
-  });
 
   return (
     <DebugOverlay id="quest-detail-page" tag="div" label="QuestDetailPage" variant="feature">
@@ -189,9 +213,7 @@ export default function QuestDetailPage() {
                   const totalRequired = isItemObj
                     ? obj.requiredItems.reduce((sum, ri) => sum + ri.count, 0)
                     : 1;
-                  const isObjDone = isItemObj
-                    ? collected >= totalRequired
-                    : userStatus === 'COMPLETED';
+                  const isObjDone = collected >= totalRequired;
 
                   return (
                     <div key={obj.id}
@@ -199,7 +221,7 @@ export default function QuestDetailPage() {
                       <Checkbox.Root
                         checked={isObjDone}
                         onCheckedChange={isItemObj ? undefined : () =>
-                          token && handleStatusChange(isObjDone ? 'IN_PROGRESS' : 'COMPLETED')}
+                          token && updateItemCount(obj.id, isObjDone ? 0 : 1)}
                         className={cn('w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
                           isObjDone ? 'bg-complete' : 'bg-elevated', !isItemObj && token && 'cursor-pointer')}>
                         <Checkbox.Indicator>
@@ -212,33 +234,40 @@ export default function QuestDetailPage() {
                           {obj.optional && <span className="ml-1 text-[10px] text-text-muted">(선택)</span>}
                         </p>
 
-                        {/* 아이템 목표: 수량 컨트롤 */}
+                        {/* 아이템 목표: 아이템별 체크박스 */}
                         {isItemObj && (
                           <div className="mt-2 space-y-1">
-                            {obj.requiredItems.map(ri => {
-                              const itemCollected = itemCounts[String(obj.id)] ?? 0;
+                            {obj.requiredItems.map((ri, idx) => {
+                              const itemStates = getItemCheckedStates(obj.requiredItems, collected);
+                              const isItemChecked = itemStates[idx];
                               return (
                                 <div key={ri.item.id} className="flex items-center gap-2">
+                                  {token && (
+                                    <Checkbox.Root
+                                      checked={isItemChecked}
+                                      onCheckedChange={() => {
+                                        const newStates = [...itemStates];
+                                        newStates[idx] = !newStates[idx];
+                                        const newTotal = computeTotalFromStates(obj.requiredItems, newStates);
+                                        updateItemCount(obj.id, newTotal);
+                                      }}
+                                      className={cn('w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer',
+                                        isItemChecked ? 'bg-complete' : 'bg-elevated')}>
+                                      <Checkbox.Indicator>
+                                        <Check size={10} className="text-bg" />
+                                      </Checkbox.Indicator>
+                                    </Checkbox.Root>
+                                  )}
                                   {ri.item.iconUrl
                                     ? <img src={ri.item.iconUrl} alt={ri.item.name} className="w-6 h-6 rounded object-contain bg-elevated" />
                                     : <Package size={16} className="text-text-muted" />}
-                                  <span className="text-xs text-text-secondary flex-1 truncate">
+                                  <span className={cn('text-xs flex-1 truncate', isItemChecked ? 'text-text-muted line-through' : 'text-text-secondary')}>
                                     {ri.item.name}
                                     {ri.foundInRaid && <span className="ml-1 text-[10px] text-complete">(FIR)</span>}
                                   </span>
-                                  {token ? (
-                                    <div className="flex items-center gap-1">
-                                      <button onClick={() => handleItemCount(obj.id, ri.count, -1)}
-                                        className="w-5 h-5 rounded bg-elevated text-text-muted hover:text-text text-xs cursor-pointer">-</button>
-                                      <span className="text-xs font-mono text-text-secondary w-10 text-center">
-                                        {itemCollected}/{ri.count}
-                                      </span>
-                                      <button onClick={() => handleItemCount(obj.id, ri.count, 1)}
-                                        className="w-5 h-5 rounded bg-elevated text-text-muted hover:text-text text-xs cursor-pointer">+</button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs font-mono text-text-muted">×{ri.count}</span>
-                                  )}
+                                  <span className={cn('text-xs font-mono', isItemChecked ? 'text-complete' : 'text-text-muted')}>
+                                    ×{ri.count}
+                                  </span>
                                 </div>
                               );
                             })}
