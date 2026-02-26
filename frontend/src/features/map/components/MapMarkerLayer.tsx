@@ -1,7 +1,8 @@
-import { AlertCircle, LogOut, Lock } from 'lucide-react';
+import { AlertCircle, LogOut, Lock, Box } from 'lucide-react';
 import { cn } from '../../../utils/cn';
-import { getExtractColor, getSpawnColor } from '../constants/markerConfig';
-import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapSpawnMarker } from '../../../types/map';
+import { getExtractColor } from '../constants/markerConfig';
+import { getContainerConfig } from '../constants/containerConfig';
+import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapLootContainerMarker } from '../../../types/map';
 import type { PopupData } from './MapMarkerPopup';
 
 interface MapBounds {
@@ -16,7 +17,7 @@ interface Props {
   questMarkers: QuestMapMarker[];
   extractMarkers: MapExtractMarker[];
   lockMarkers: MapLockMarker[];
-  spawnMarkers: MapSpawnMarker[];
+  lootContainerMarkers: MapLootContainerMarker[];
   getFloorDistance: (floorId: string | null) => number;
   isCompleted: (questId: number) => boolean;
   onMarkerClick: (popup: PopupData, e: React.MouseEvent) => void;
@@ -28,7 +29,7 @@ export default function MapMarkerLayer({
   questMarkers,
   extractMarkers,
   lockMarkers,
-  spawnMarkers,
+  lootContainerMarkers,
   getFloorDistance,
   isCompleted,
   onMarkerClick,
@@ -36,36 +37,38 @@ export default function MapMarkerLayer({
 }: Props) {
   return (
     <>
-      {/* 스폰 마커 (가장 뒤) */}
-      {spawnMarkers.map((marker, i) => {
+      {/* 루팅 컨테이너 마커 (가장 낮은 z-index) */}
+      {lootContainerMarkers.map((marker, i) => {
         if (marker.positionX === null || marker.positionY === null) return null;
         const dist = getFloorDistance(marker.floorId);
         const ml = mapBounds.left + (marker.positionX / 100) * mapBounds.width;
         const mt = mapBounds.top + (marker.positionY / 100) * mapBounds.height;
-        const { bg, glow } = getSpawnColor(marker.sides);
+        const config = getContainerConfig(marker.normalizedName);
         return (
           <div
-            key={`spawn-${i}`}
+            key={`loot-${i}`}
             className="absolute group cursor-pointer"
             style={{
               left: `${ml}px`,
               top: `${mt}px`,
               transform: 'translate(-50%, -50%)',
-              opacity: dist === 0 ? 0.7 : dist === 1 ? 0.3 : 0.1,
+              opacity: dist === 0 ? 1 : dist === 1 ? 0.4 : 0.2,
               filter: dist > 0 ? `blur(${Math.min(dist, 2)}px)` : 'none',
-              zIndex: dist === 0 ? 5 : 2,
+              zIndex: dist === 0 ? 7 : 3,
               transition: 'opacity 0.3s, filter 0.3s',
             }}
-            onClick={(e) => onMarkerClick({ type: 'spawn', data: marker }, e)}
+            onClick={(e) => onMarkerClick({ type: 'lootContainer', data: marker }, e)}
           >
             <div
-              className={cn('w-3 h-3 rounded-full', bg)}
-              style={{ boxShadow: `0 0 4px ${glow}` }}
-            />
+              className={cn('w-3.5 h-3.5 rounded-full flex items-center justify-center transition-transform group-hover:scale-125', config.bgColor)}
+              style={{ boxShadow: `0 0 5px ${config.glowColor}` }}
+            >
+              <Box size={7} className="text-white" />
+            </div>
             {!activePopup && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
                 <div className="bg-bg/90 backdrop-blur-sm text-text text-[9px] px-1.5 py-0.5 rounded-lg">
-                  {marker.zoneName ?? '스폰'}
+                  {marker.containerName}
                 </div>
               </div>
             )}

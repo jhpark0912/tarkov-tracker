@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import DebugProvider from './components/debug/DebugProvider';
 import DebugToggle from './components/debug/DebugToggle';
@@ -12,6 +12,8 @@ import MapSelectPage from './features/map/MapSelectPage';
 import MapViewPage from './features/map/MapViewPage';
 import LoginPage from './features/auth/LoginPage';
 import SignupPage from './features/auth/SignupPage';
+
+const SettingsPage = lazy(() => import('./features/settings/SettingsPage'));
 
 export default function App() {
   const initFromStorage = useAuthStore((s) => s.initFromStorage);
@@ -32,10 +34,12 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route
-            path="/progress"
+            path="/settings"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Suspense fallback={<div className="flex items-center justify-center py-20 text-text-muted text-sm">로딩 중...</div>}>
+                  <SettingsPage />
+                </Suspense>
               </ProtectedRoute>
             }
           />

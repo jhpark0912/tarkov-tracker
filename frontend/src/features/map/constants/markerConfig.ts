@@ -26,11 +26,11 @@ export const MARKER_CONFIG: Record<MarkerCategory, MarkerCategoryConfig> = {
     activeColor: 'bg-red-500/20 text-red-400',
     glowColor: 'rgba(239,68,68,0.5)',
   },
-  spawns: {
-    label: '스폰',
-    color: 'bg-green-500',
-    activeColor: 'bg-green-500/20 text-green-400',
-    glowColor: 'rgba(34,197,94,0.5)',
+  lootContainers: {
+    label: '루팅',
+    color: 'bg-amber-500',
+    activeColor: 'bg-amber-500/20 text-amber-400',
+    glowColor: 'rgba(245,158,11,0.5)',
   },
 };
 
@@ -43,14 +43,4 @@ export function getExtractColor(faction: string | null): { bg: string; glow: str
     default:
       return { bg: 'bg-purple-500', glow: 'rgba(168,85,247,0.5)' };
   }
-}
-
-export function getSpawnColor(sides: string[]): { bg: string; glow: string } {
-  if (sides.includes('pmc')) {
-    return { bg: 'bg-emerald-500', glow: 'rgba(16,185,129,0.5)' };
-  }
-  if (sides.includes('scav')) {
-    return { bg: 'bg-yellow-500', glow: 'rgba(234,179,8,0.5)' };
-  }
-  return { bg: 'bg-gray-400', glow: 'rgba(156,163,175,0.5)' };
 }

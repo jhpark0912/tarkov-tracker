@@ -42,5 +42,5 @@ tarkov:
     enabled: true
 
 logging:
-  level:
-    com.tarkov.helper: DEBUG
+  charset:
+    console: UTF-8

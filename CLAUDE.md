@@ -49,6 +49,7 @@ tarkov-quest-helper/
 
 ### 설계 문서
 ```
+.claude/structure.md   # 파일/패키지 구조 맵 — 코드 탐색 시 먼저 참조
 docs/
 ├── design.md          # DB 스키마, API 명세, DTO 구조, GraphQL 쿼리 상세
 ├── phase1-plan.md     # Phase 1 구현 계획 (수정 사항, 동기화 정책, 유저 데이터 보호)

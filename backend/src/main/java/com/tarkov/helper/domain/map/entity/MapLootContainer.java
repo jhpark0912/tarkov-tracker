@@ -4,12 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "map_spawns")
+@Table(name = "map_loot_containers")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MapSpawn {
+public class MapLootContainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,14 +19,11 @@ public class MapSpawn {
     @JoinColumn(name = "map_id", nullable = false)
     private GameMap gameMap;
 
-    @Column(name = "zone_name")
-    private String zoneName;
+    @Column(name = "container_name", nullable = false)
+    private String containerName;
 
-    @Column(length = 100)
-    private String sides;
-
-    @Column(length = 200)
-    private String categories;
+    @Column(name = "normalized_name", nullable = false, length = 100)
+    private String normalizedName;
 
     @Column(name = "floor_id", length = 50)
     private String floorId;

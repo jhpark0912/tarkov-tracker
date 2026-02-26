@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Eye, EyeOff, Crown, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw, LogOut, Lock, Users, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Crown, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw, LogOut, Lock, AlertCircle, Package, Check, X } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useMapStore } from '../../store/mapStore';
@@ -9,6 +9,7 @@ import MapQuestPanel from './components/MapQuestPanel';
 import MapMarkerLayer from './components/MapMarkerLayer';
 import MapMarkerPopup from './components/MapMarkerPopup';
 import { MARKER_CONFIG } from './constants/markerConfig';
+import { getContainerConfig } from './constants/containerConfig';
 import type { MarkerCategory } from '../../types/map';
 import type { PopupData } from './components/MapMarkerPopup';
 
@@ -16,14 +17,15 @@ const CATEGORY_ICONS: Record<MarkerCategory, typeof AlertCircle> = {
   quests: AlertCircle,
   extracts: LogOut,
   locks: Lock,
-  spawns: Users,
+  lootContainers: Package,
 };
 
 export default function MapViewPage() {
   const { normalizedName } = useParams<{ normalizedName: string }>();
   const {
-    currentMap, markers, positions, markerVisibility, loading, error,
-    fetchMapDetail, fetchMarkers, fetchPositions, toggleMarkerCategory, clearCurrentMap,
+    currentMap, markers, positions, markerVisibility, lootContainerFilter, loading, error,
+    fetchMapDetail, fetchMarkers, fetchPositions, toggleMarkerCategory,
+    toggleLootContainerType, toggleAllLootContainers, clearCurrentMap,
   } = useMapStore();
   const { questStatuses } = useProgressStore();
 
@@ -37,7 +39,9 @@ export default function MapViewPage() {
   const [pngUrl, setPngUrl] = useState<string | null>(null);
   const [pngNaturalSize, setPngNaturalSize] = useState<{ w: number; h: number } | null>(null);
   const [containerSize, setContainerSize] = useState<{ w: number; h: number } | null>(null);
+  const [showContainerFilter, setShowContainerFilter] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerFilterRef = useRef<HTMLDivElement>(null);
 
   // ── Zoom / pan state ────────────────────────────────────────────────────────
   const [zoom, setZoom] = useState(1);
@@ -55,6 +59,18 @@ export default function MapViewPage() {
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<HTMLDivElement>(null);
+
+  // ── 컨테이너 필터 외부 클릭 닫기 ────────────────────────────────────────────
+  useEffect(() => {
+    if (!showContainerFilter) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerFilterRef.current && !containerFilterRef.current.contains(e.target as Node)) {
+        setShowContainerFilter(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showContainerFilter]);
 
   // ── SVG 처리 ────────────────────────────────────────────────────────────────
   const svgHtml = useMemo(
@@ -318,7 +334,7 @@ export default function MapViewPage() {
     [markers, hideCompleted, kappaOnly, selectedQuestIds, questStatuses, markerVisibility.quests]
   );
 
-  // 탈출구/잠금/스폰 마커 필터링 (좌표 있는 것만)
+  // 탈출구/잠금 마커 필터링 (좌표 있는 것만)
   const visibleExtracts = useMemo(
     () => markerVisibility.extracts && positions?.extracts
       ? positions.extracts.filter((m) => m.positionX !== null && m.positionY !== null)
@@ -333,14 +349,39 @@ export default function MapViewPage() {
     [positions, markerVisibility.locks]
   );
 
-  const visibleSpawns = useMemo(
-    () => markerVisibility.spawns && positions?.spawns
-      ? positions.spawns.filter((m) => m.positionX !== null && m.positionY !== null)
-      : [],
-    [positions, markerVisibility.spawns]
+  // 루팅 컨테이너 마커 필터링 (카테고리 토글 + 타입별 필터)
+  const visibleLootContainers = useMemo(
+    () => {
+      if (!markerVisibility.lootContainers || !positions?.lootContainers) return [];
+      return positions.lootContainers.filter((m) =>
+        m.positionX !== null && m.positionY !== null && lootContainerFilter.has(m.normalizedName)
+      );
+    },
+    [positions, markerVisibility.lootContainers, lootContainerFilter]
   );
 
-  const totalVisibleMarkers = visibleQuestMarkers.length + visibleExtracts.length + visibleLocks.length + visibleSpawns.length;
+  // 컨테이너 타입별 카운트 (필터 드롭다운용)
+  const containerTypeCounts = useMemo(() => {
+    if (!positions?.lootContainers) return [];
+    const countMap = new Map<string, { name: string; normalizedName: string; count: number }>();
+    for (const c of positions.lootContainers) {
+      if (c.positionX === null || c.positionY === null) continue;
+      const existing = countMap.get(c.normalizedName);
+      if (existing) {
+        existing.count++;
+      } else {
+        countMap.set(c.normalizedName, { name: c.containerName, normalizedName: c.normalizedName, count: 1 });
+      }
+    }
+    return Array.from(countMap.values()).sort((a, b) => b.count - a.count);
+  }, [positions]);
+
+  const allContainerTypes = useMemo(
+    () => containerTypeCounts.map((c) => c.normalizedName),
+    [containerTypeCounts]
+  );
+
+  const totalVisibleMarkers = visibleQuestMarkers.length + visibleExtracts.length + visibleLocks.length + visibleLootContainers.length;
 
   // 팝업 위치 계산
   const popupScreenPos = useMemo(() => {
@@ -397,17 +438,76 @@ export default function MapViewPage() {
               const Icon = CATEGORY_ICONS[cat];
               const isActive = markerVisibility[cat];
               return (
-                <button
-                  key={cat}
-                  onClick={() => toggleMarkerCategory(cat)}
-                  className={cn(
-                    'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
-                    isActive ? config.activeColor : 'bg-surface-alt text-text-secondary hover:text-text'
+                <div key={cat} className="relative">
+                  <button
+                    onClick={() => {
+                      toggleMarkerCategory(cat);
+                      if (cat === 'lootContainers' && !isActive) {
+                        setShowContainerFilter(true);
+                      } else if (cat === 'lootContainers' && isActive) {
+                        setShowContainerFilter(false);
+                      }
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
+                      isActive ? config.activeColor : 'bg-surface-alt text-text-secondary hover:text-text'
+                    )}
+                  >
+                    <Icon size={14} />
+                    {config.label}
+                    {cat === 'lootContainers' && isActive && (
+                      <span className="text-[10px] text-text-muted ml-1">
+                        ({visibleLootContainers.length})
+                      </span>
+                    )}
+                  </button>
+
+                  {/* 루팅 컨테이너 타입별 필터 드롭다운 */}
+                  {cat === 'lootContainers' && isActive && showContainerFilter && containerTypeCounts.length > 0 && (
+                    <div
+                      ref={containerFilterRef}
+                      className="absolute top-full left-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto"
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                        <span className="text-xs font-semibold text-text">컨테이너 타입 필터</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => toggleAllLootContainers(allContainerTypes)}
+                            className="text-[10px] text-text-muted hover:text-gold transition-colors px-1.5 py-0.5 rounded"
+                          >
+                            {allContainerTypes.every((t) => lootContainerFilter.has(t)) ? '전체 해제' : '전체 선택'}
+                          </button>
+                          <button
+                            onClick={() => setShowContainerFilter(false)}
+                            className="w-5 h-5 flex items-center justify-center rounded text-text-muted hover:text-text"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="py-1">
+                        {containerTypeCounts.map((ct) => {
+                          const cfg = getContainerConfig(ct.normalizedName);
+                          const checked = lootContainerFilter.has(ct.normalizedName);
+                          return (
+                            <button
+                              key={ct.normalizedName}
+                              onClick={() => toggleLootContainerType(ct.normalizedName)}
+                              className="flex items-center gap-2 w-full px-3 py-1.5 hover:bg-surface-alt transition-colors text-left"
+                            >
+                              <div className={cn('w-3 h-3 rounded-sm flex items-center justify-center', checked ? cfg.bgColor : 'bg-elevated')}>
+                                {checked && <Check size={8} className="text-white" />}
+                              </div>
+                              <span className="text-xs text-text flex-1 truncate">{ct.name}</span>
+                              <span className="text-[10px] text-text-muted">{ct.count}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                >
-                  <Icon size={14} />
-                  {config.label}
-                </button>
+                </div>
               );
             })}
 
@@ -510,7 +610,7 @@ export default function MapViewPage() {
                   questMarkers={visibleQuestMarkers}
                   extractMarkers={visibleExtracts}
                   lockMarkers={visibleLocks}
-                  spawnMarkers={visibleSpawns}
+                  lootContainerMarkers={visibleLootContainers}
                   getFloorDistance={getFloorDistance}
                   isCompleted={isCompleted}
                   onMarkerClick={handleMarkerClick}

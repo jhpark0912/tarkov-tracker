@@ -9,14 +9,14 @@ export interface SyncResult {
   questsRemoved: number;
   extractsProcessed: number;
   locksProcessed: number;
-  spawnsProcessed: number;
+  containersProcessed: number;
   durationMs: number;
 }
 
 export const adminApi = {
   triggerSync: async (): Promise<SyncResult> => {
     const res = await axiosInstance.post<SyncResult>('/admin/sync', null, {
-      timeout: 120000,
+      timeout: 300000,
     });
     return res.data;
   },

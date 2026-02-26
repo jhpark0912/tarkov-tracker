@@ -19,7 +19,7 @@ public class MapPositionSyncService {
 
     private final MapExtractRepository mapExtractRepository;
     private final MapLockRepository mapLockRepository;
-    private final MapSpawnRepository mapSpawnRepository;
+    private final MapLootContainerRepository mapLootContainerRepository;
     private final CoordinateConverter coordinateConverter;
 
     public record MapPositionMeta(double[][] bounds, int coordinateRotation,
@@ -29,7 +29,7 @@ public class MapPositionSyncService {
     public int[] syncMapPositions(List<TarkovMapDto> apiMaps,
                                   Map<String, GameMap> mapCache,
                                   Map<String, MapPositionMeta> metaMap) {
-        int extractCount = 0, lockCount = 0, spawnCount = 0;
+        int extractCount = 0, lockCount = 0, containerCount = 0;
 
         for (TarkovMapDto dto : apiMaps) {
             GameMap gameMap = mapCache.get(dto.getId());
@@ -81,29 +81,28 @@ public class MapPositionSyncService {
                 }
             }
 
-            // 스폰 포인트
-            if (dto.getSpawns() != null) {
-                mapSpawnRepository.deleteByGameMap(gameMap);
-                for (TarkovSpawnDto spawn : dto.getSpawns()) {
-                    CoordinateConverter.ConvertedPosition pos = convertPosition(spawn.getPosition(), bounds, rotation, floorRanges, defaultFloor);
-                    String sides = spawn.getSides() != null ? String.join(",", spawn.getSides()) : null;
-                    String categories = spawn.getCategories() != null ? String.join(",", spawn.getCategories()) : null;
-                    mapSpawnRepository.save(MapSpawn.builder()
+            // 루팅 컨테이너
+            if (dto.getLootContainers() != null) {
+                mapLootContainerRepository.deleteByGameMap(gameMap);
+                for (TarkovLootContainerDto lc : dto.getLootContainers()) {
+                    if (lc.getLootContainer() == null) continue;
+                    CoordinateConverter.ConvertedPosition pos = convertPosition(lc.getPosition(), bounds, rotation, floorRanges, defaultFloor);
+                    mapLootContainerRepository.save(MapLootContainer.builder()
                             .gameMap(gameMap)
-                            .zoneName(spawn.getZoneName())
-                            .sides(sides)
-                            .categories(categories)
+                            .containerName(lc.getLootContainer().getName())
+                            .normalizedName(lc.getLootContainer().getNormalizedName())
                             .floorId(pos.floorId())
                             .positionX(pos.positionX())
                             .positionY(pos.positionY())
                             .build());
-                    spawnCount++;
+                    containerCount++;
                 }
             }
+
         }
 
-        log.info("맵 위치 동기화 완료: 탈출구 {}건, 잠금 {}건, 스폰 {}건", extractCount, lockCount, spawnCount);
-        return new int[]{extractCount, lockCount, spawnCount};
+        log.info("맵 위치 동기화 완료: 탈출구 {}건, 잠금 {}건, 컨테이너 {}건", extractCount, lockCount, containerCount);
+        return new int[]{extractCount, lockCount, containerCount};
     }
 
     private CoordinateConverter.ConvertedPosition convertPosition(

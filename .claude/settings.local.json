@@ -59,7 +59,18 @@
       "Bash(node:*)",
       "Bash(PYTHONIOENCODING=utf-8 gh api:*)",
       "WebFetch(domain:assets.tarkov.dev)",
-      "Bash(file:*)"
+      "Bash(file:*)",
+      "Bash(npm run lint:*)",
+      "mcp__plugin_serena_serena__find_symbol",
+      "mcp__plugin_serena_serena__find_file",
+      "mcp__plugin_serena_serena__activate_project",
+      "Bash(npx vitest run)",
+      "Bash(java:*)",
+      "Bash(\"/c/Program Files/Java/zulu17.40.19-ca-jdk17.0.6-win_x64/bin/java\" -XshowSettings:all)",
+      "mcp__plugin_serena_serena__read_file",
+      "mcp__plugin_serena_serena__search_for_pattern",
+      "Bash(grep:*)",
+      "Bash(git status:*)"
     ]
   }
 }

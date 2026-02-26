@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, Search, LogOut, LogIn } from 'lucide-react';
+import { LogOut, LogIn } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import DebugOverlay from '../debug/DebugOverlay';
 
@@ -7,6 +7,7 @@ const pageTitles: Record<string, string> = {
   '/': '대시보드',
   '/quests': '퀘스트',
   '/map': '맵',
+  '/settings': '설정',
   '/login': '로그인',
   '/signup': '회원가입',
 };
@@ -38,21 +39,6 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Search placeholder */}
-          <div className="hidden md:flex items-center gap-2 bg-surface rounded-xl px-4 py-2">
-            <Search size={16} className="text-text-muted" />
-            <input
-              type="text"
-              placeholder="퀘스트, 아이템 검색..."
-              className="bg-transparent border-none outline-none text-sm text-text placeholder:text-text-muted w-48"
-            />
-          </div>
-
-          {/* Notification bell */}
-          <button className="w-10 h-10 flex items-center justify-center rounded-xl text-text-secondary hover:text-text hover:bg-surface transition-colors">
-            <Bell size={18} strokeWidth={1.5} />
-          </button>
-
           {/* Auth section */}
           {user ? (
             <>

@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Zap,
   Target,
@@ -70,6 +71,12 @@ export default function DashboardPage() {
   const { questStatuses } = useProgressStore();
   const inProgressCount = Object.values(questStatuses).filter(s => s === 'IN_PROGRESS').length;
 
+  const topMap = useMemo(() => {
+    if (!mapProgress.length) return '-';
+    const sorted = [...mapProgress].sort((a, b) => b.total - a.total);
+    return sorted[0].mapName;
+  }, [mapProgress]);
+
   return (
     <DebugOverlay id="dashboard-page" tag="div" label="DashboardPage" variant="feature">
       <div id="dashboard-page" className="space-y-6 max-w-7xl mx-auto">
@@ -101,7 +108,7 @@ export default function DashboardPage() {
             <StatCard
               icon={MapPin}
               label="주요 맵"
-              value="Customs"
+              value={topMap}
               sub="퀘스트 활동 최다"
               color="bg-incomplete/20 text-incomplete"
             />
@@ -160,9 +167,9 @@ export default function DashboardPage() {
                   <h2 className="text-lg font-semibold text-text">트레이더 진행률</h2>
                   <p className="text-xs text-text-muted">트레이더별 퀘스트 완료 현황</p>
                 </div>
-                <button className="text-xs text-gold hover:text-gold-dim transition-colors">
+                <Link to="/quests" className="text-xs text-gold hover:text-gold-dim transition-colors no-underline">
                   전체 보기
-                </button>
+                </Link>
               </div>
 
               <div className="space-y-4">
@@ -202,9 +209,9 @@ export default function DashboardPage() {
                 <h2 className="text-lg font-semibold text-text">맵별 진행률</h2>
                 <p className="text-xs text-text-muted">맵 위치별 퀘스트 현황</p>
               </div>
-              <button className="text-xs text-gold hover:text-gold-dim transition-colors">
-                See all
-              </button>
+              <Link to="/map" className="text-xs text-gold hover:text-gold-dim transition-colors no-underline">
+                전체 보기
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -212,7 +219,11 @@ export default function DashboardPage() {
                 <p className="text-xs text-text-muted py-4 col-span-3 text-center">로그인 후 진행 상태를 확인하세요.</p>
               )}
               {mapProgress.map((m) => (
-                <div key={m.mapName} className="bg-surface-alt rounded-xl p-4 hover:bg-elevated/50 transition-colors cursor-pointer">
+                <Link
+                  key={m.mapName}
+                  to={`/map/${m.mapName.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="bg-surface-alt rounded-xl p-4 hover:bg-elevated/50 transition-colors cursor-pointer no-underline"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-text">{m.mapName}</span>
                     <span className="text-xs text-text-muted">{m.percent.toFixed(0)}%</span>
@@ -222,7 +233,7 @@ export default function DashboardPage() {
                     <span className="text-[10px] uppercase text-text-muted">{m.total} quests</span>
                     <span className="text-xs text-text-secondary">{m.completed} done</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

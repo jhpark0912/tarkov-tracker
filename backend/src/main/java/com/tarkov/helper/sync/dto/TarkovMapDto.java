@@ -15,8 +15,8 @@ public class TarkovMapDto {
     private String normalizedName;
     private List<TarkovExtractDto> extracts;
     private List<TarkovLockDto> locks;
-    private List<TarkovSpawnDto> spawns;
     private List<TarkovBossDto> bosses;
+    private List<TarkovLootContainerDto> lootContainers;
 
     @Getter
     @NoArgsConstructor
@@ -40,16 +40,6 @@ public class TarkovMapDto {
         private TarkovPositionDto position;
         private Double top;
         private Double bottom;
-    }
-
-    @Getter
-    @NoArgsConstructor
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class TarkovSpawnDto {
-        private String zoneName;
-        private TarkovPositionDto position;
-        private List<String> sides;
-        private List<String> categories;
     }
 
     @Getter
@@ -86,5 +76,21 @@ public class TarkovMapDto {
         private String name;
         private String shortName;
         private String iconLink;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class TarkovLootContainerDto {
+        private TarkovPositionDto position;
+        private TarkovContainerInfoDto lootContainer;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class TarkovContainerInfoDto {
+        private String name;
+        private String normalizedName;
     }
 }

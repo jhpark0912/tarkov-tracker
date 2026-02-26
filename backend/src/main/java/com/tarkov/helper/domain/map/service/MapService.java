@@ -21,7 +21,7 @@ public class MapService {
     private final MapFloorRepository mapFloorRepository;
     private final MapExtractRepository mapExtractRepository;
     private final MapLockRepository mapLockRepository;
-    private final MapSpawnRepository mapSpawnRepository;
+    private final MapLootContainerRepository mapLootContainerRepository;
 
     public List<MapListItem> getMapList() {
         return gameMapRepository.findAll().stream()
@@ -49,14 +49,14 @@ public class MapService {
                 .map(MapLockMarker::from)
                 .collect(Collectors.toList());
 
-        List<MapSpawnMarker> spawns = mapSpawnRepository.findByGameMap(map).stream()
-                .map(MapSpawnMarker::from)
+        List<MapLootContainerMarker> lootContainers = mapLootContainerRepository.findByGameMap(map).stream()
+                .map(MapLootContainerMarker::from)
                 .collect(Collectors.toList());
 
         return MapPositionData.builder()
                 .extracts(extracts)
                 .locks(locks)
-                .spawns(spawns)
+                .lootContainers(lootContainers)
                 .build();
     }
 }

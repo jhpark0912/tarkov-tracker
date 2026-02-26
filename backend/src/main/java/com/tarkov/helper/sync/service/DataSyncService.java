@@ -59,7 +59,7 @@ public class DataSyncService {
         Map<String, MapMetadata> metadata = loadMapMetadata();
         Map<String, GameMap> mapCache = syncMaps(tasks, apiMaps, metadata);
 
-        // 1.5 맵 위치 데이터 동기화 (탈출구, 잠금, 스폰)
+        // 1.5 맵 위치 데이터 동기화 (탈출구, 잠금)
         Map<String, MapPositionSyncService.MapPositionMeta> positionMeta = buildPositionMeta(metadata);
         int[] positionStats = mapPositionSyncService.syncMapPositions(apiMaps, mapCache, positionMeta);
 
@@ -94,7 +94,7 @@ public class DataSyncService {
                 .questsRemoved(removedCount)
                 .extractsProcessed(positionStats[0])
                 .locksProcessed(positionStats[1])
-                .spawnsProcessed(positionStats[2])
+                .containersProcessed(positionStats.length > 2 ? positionStats[2] : 0)
                 .durationMs(duration)
                 .build();
 

@@ -5,6 +5,7 @@ import {
   ScrollText,
   Map,
   LogIn,
+  Settings,
   X,
   MapPin,
   RefreshCw,
@@ -221,7 +222,7 @@ function SyncButton() {
                 <span>퀘스트 갱신</span><span className="text-text">{result.questsUpdated}</span>
                 <span>탈출구</span><span className="text-text">{result.extractsProcessed}</span>
                 <span>잠금</span><span className="text-text">{result.locksProcessed}</span>
-                <span>스폰</span><span className="text-text">{result.spawnsProcessed}</span>
+                <span>컨테이너</span><span className="text-text">{result.containersProcessed}</span>
               </div>
               <p className="text-xs text-text-muted mt-2">{(result.durationMs / 1000).toFixed(1)}초 소요</p>
             </div>
@@ -309,9 +310,15 @@ export default function Sidebar() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Sync button (authenticated only) */}
+        {/* Settings + Sync (authenticated only) */}
         {user && (
-          <div className="flex-shrink-0 mb-2">
+          <div className="flex flex-col items-center gap-2 flex-shrink-0 mb-2">
+            <NavButton
+              icon={Settings}
+              label="설정"
+              path="/settings"
+              isActive={location.pathname === '/settings'}
+            />
             <SyncButton />
           </div>
         )}

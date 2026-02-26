@@ -58,10 +58,9 @@ export interface MapLockMarker {
   positionY: number | null;
 }
 
-export interface MapSpawnMarker {
-  zoneName: string | null;
-  sides: string[];
-  categories: string[];
+export interface MapLootContainerMarker {
+  containerName: string;
+  normalizedName: string;
   floorId: string | null;
   positionX: number | null;
   positionY: number | null;
@@ -70,7 +69,7 @@ export interface MapSpawnMarker {
 export interface MapPositionData {
   extracts: MapExtractMarker[];
   locks: MapLockMarker[];
-  spawns: MapSpawnMarker[];
+  lootContainers: MapLootContainerMarker[];
 }
 
-export type MarkerCategory = 'quests' | 'extracts' | 'locks' | 'spawns';
+export type MarkerCategory = 'quests' | 'extracts' | 'locks' | 'lootContainers';

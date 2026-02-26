@@ -46,14 +46,27 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 }
 
+// UTF-8 인코딩 통합 설정 (Windows CP949 환경 대응)
+def utf8JvmArgs = [
+    '-Dfile.encoding=UTF-8',
+    '-Dconsole.encoding=UTF-8',
+    '-Dstdout.encoding=UTF-8',
+    '-Dstderr.encoding=UTF-8',
+]
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+    jvmArgs utf8JvmArgs
 }
 
 tasks.withType(JavaExec).configureEach {
-    jvmArgs '-Dfile.encoding=UTF-8', '-Dconsole.encoding=UTF-8'
+    jvmArgs utf8JvmArgs
 }
 
 bootRun {
-    jvmArgs '-Dfile.encoding=UTF-8', '-Dconsole.encoding=UTF-8'
+    jvmArgs utf8JvmArgs
 }

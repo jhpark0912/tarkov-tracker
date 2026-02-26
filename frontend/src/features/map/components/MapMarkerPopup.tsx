@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
-import { Crown, Lock, LogOut, Users } from 'lucide-react';
+import { Crown, Lock, LogOut, Box } from 'lucide-react';
 import { cn } from '../../../utils/cn';
-import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapSpawnMarker } from '../../../types/map';
+import { getContainerConfig } from '../constants/containerConfig';
+import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapLootContainerMarker } from '../../../types/map';
 
 type PopupData =
   | { type: 'quest'; data: QuestMapMarker; isCompleted: boolean }
   | { type: 'extract'; data: MapExtractMarker }
   | { type: 'lock'; data: MapLockMarker }
-  | { type: 'spawn'; data: MapSpawnMarker };
+  | { type: 'lootContainer'; data: MapLootContainerMarker };
 
 interface Props {
   popup: PopupData;
@@ -34,7 +35,7 @@ export default function MapMarkerPopup({ popup, screenPos, containerWidth }: Pro
         {popup.type === 'quest' && <QuestPopup data={popup.data} isCompleted={popup.isCompleted} />}
         {popup.type === 'extract' && <ExtractPopup data={popup.data} />}
         {popup.type === 'lock' && <LockPopup data={popup.data} />}
-        {popup.type === 'spawn' && <SpawnPopup data={popup.data} />}
+        {popup.type === 'lootContainer' && <LootContainerPopup data={popup.data} />}
       </div>
     </div>
   );
@@ -116,20 +117,15 @@ function LockPopup({ data }: { data: MapLockMarker }) {
   );
 }
 
-function SpawnPopup({ data }: { data: MapSpawnMarker }) {
-  const sideLabels = data.sides.map((s) => (s === 'pmc' ? 'PMC' : s === 'scav' ? 'Scav' : s));
+function LootContainerPopup({ data }: { data: MapLootContainerMarker }) {
+  const config = getContainerConfig(data.normalizedName);
   return (
     <>
-      <div className="flex items-center gap-2 mb-2">
-        <Users size={14} className="text-green-400 shrink-0" />
-        <span className="text-sm font-semibold text-text leading-tight">스폰 포인트</span>
+      <div className="flex items-center gap-2 mb-1">
+        <Box size={14} className="text-amber-400 shrink-0" />
+        <span className="text-sm font-semibold text-text leading-tight">{data.containerName}</span>
       </div>
-      {data.zoneName && <p className="text-xs text-text-secondary mb-1">{data.zoneName}</p>}
-      <div className="flex gap-1 flex-wrap">
-        {sideLabels.map((label, i) => (
-          <span key={i} className="text-[9px] bg-surface-alt px-1.5 py-0.5 rounded text-text-muted">{label}</span>
-        ))}
-      </div>
+      <span className="text-[10px] text-text-muted">{config.label}</span>
     </>
   );
 }

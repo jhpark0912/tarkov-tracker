@@ -10,5 +10,5 @@ import java.util.List;
 public class MapPositionData {
     private final List<MapExtractMarker> extracts;
     private final List<MapLockMarker> locks;
-    private final List<MapSpawnMarker> spawns;
+    private final List<MapLootContainerMarker> lootContainers;
 }
