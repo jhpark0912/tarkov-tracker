@@ -49,7 +49,9 @@ tarkov-quest-helper/
 
 ### 설계 문서
 ```
-.claude/structure.md   # 파일/패키지 구조 맵 — 코드 탐색 시 먼저 참조
+.claude/structure.md          # 파일/패키지 구조 맵 — 코드 탐색 시 먼저 참조
+.claude/progress.md           # 전체 진행 상태 + Phase별 완료 기록
+.claude/story-quest-design.md # 메인 스토리 퀘스트 설계 (분기 구조, 엔딩, UI, 데이터 스키마)
 docs/
 ├── design.md          # DB 스키마, API 명세, DTO 구조, GraphQL 쿼리 상세
 ├── phase1-plan.md     # Phase 1 구현 계획 (수정 사항, 동기화 정책, 유저 데이터 보호)
@@ -67,6 +69,7 @@ docs/
 | `item/` | 아이템 도메인 |
 | `map/` | 맵 도메인 (층 정보 포함) |
 | `progress/` | 사용자 퀘스트/아이템 진행 상태 |
+| `story/` | 메인 스토리 퀘스트 (챕터 진행, 분기 선택, 엔딩) — 기존 quest와 완전 별도 |
 | `sync/` | tarkov.dev API 데이터 동기화 (WebClient + 스케줄러) |
 
 ### Frontend 구조 (`frontend/src/`)
@@ -74,8 +77,8 @@ docs/
 | 디렉토리 | 역할 |
 |----------|------|
 | `api/` | Axios 인스턴스 (JWT interceptor) + API 호출 함수 |
-| `store/` | Zustand 스토어 (auth, quest, progress, map) |
-| `features/` | 페이지별 컴포넌트 (dashboard, quests, map, items) |
+| `store/` | Zustand 스토어 (auth, quest, progress, map, story) |
+| `features/` | 페이지별 컴포넌트 (dashboard, quests, map, items, story) |
 | `components/` | 공용 컴포넌트 (Layout, Header, Sidebar 등) |
 | `types/` | TypeScript 타입 정의 (도메인별 분리) |
 | `hooks/` | 커스텀 훅 |
@@ -126,6 +129,12 @@ docs/
 - 맵 층 전환: SVG `<g>` 그룹 display toggle + 해당 층 마커만 필터링
 - Found in Raid 아이템: 별도 아이콘 구분
 - 맵 좌표: tarkovdata의 `gps.topPercent`, `gps.leftPercent`를 SVG bounds에 맞춰 변환
+- **메인 스토리**: 기존 딜러 퀘스트와 **완전 별도 시스템** (도메인, UI, 라우트 모두 분리)
+- 스토리 챕터 상태: `LOCKED` → `AVAILABLE` → `IN_PROGRESS` → `COMPLETED`
+- 스토리 분기: 챕터 내 선택지(choice)로 다음 챕터가 결정됨
+- 스토리 엔딩: 4개 (Savior, Survivor, Debtor, Fallen) — 분기 선택 조합으로 결정
+- 스토리 데이터: 수동 JSON 관리 (tarkov.dev API 미사용)
+- 상세 설계: `.claude/story-quest-design.md` 참조
 
 ## 외부 데이터 소스
 

@@ -10,6 +10,7 @@ import QuestListPage from './features/quests/QuestListPage';
 import QuestDetailPage from './features/quests/QuestDetailPage';
 import MapSelectPage from './features/map/MapSelectPage';
 import MapViewPage from './features/map/MapViewPage';
+import StoryFlowPage from './features/story/StoryFlowPage';
 import LoginPage from './features/auth/LoginPage';
 import SignupPage from './features/auth/SignupPage';
 
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/quests/:id" element={<QuestDetailPage />} />
           <Route path="/map" element={<MapSelectPage />} />
           <Route path="/map/:normalizedName" element={<MapViewPage />} />
+          <Route path="/story" element={<StoryFlowPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route

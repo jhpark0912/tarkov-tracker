@@ -46,6 +46,7 @@
 | `features/map/components/MapQuestPanel.tsx` | | 우측 퀘스트 목록 패널 |
 | `features/map/constants/markerConfig.ts` | `MARKER_CONFIG` | 카테고리별 색상/라벨 |
 | `features/map/constants/containerConfig.ts` | `getContainerConfig` | 컨테이너 타입별 아이콘/색상 |
+| `features/story/StoryFlowPage.tsx` | | 메인 스토리 플로우차트 (SVG 기반, `/story`) |
 | `components/layout/Sidebar.tsx` | | 사이드바 + 동기화 버튼 |
 
 ## 데이터 흐름

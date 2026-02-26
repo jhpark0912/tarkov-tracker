@@ -109,8 +109,32 @@
 
 ---
 
+### Phase 4 — 메인 스토리 퀘스트 (진행 중)
+
+**설계 문서**: `.claude/story-quest-design.md` (상세 스펙)
+
+**핵심 결정사항**
+- 기존 딜러 퀘스트와 **완전 별도** 시스템 (도메인, UI, 데이터 모두 분리)
+- 데이터 소스: **수동 JSON 관리** (tarkov.dev API 미사용)
+- UI: **SVG 플로우차트** (분기형 스토리 흐름 시각화)
+- 추적 수준: **챕터 단위 완료 체크** + 분기 선택 기록
+
+**프로토타입 완료**
+- `frontend/src/features/story/StoryFlowPage.tsx` — SVG 플로우차트 프로토타입
+- 라우트: `/story` (App.tsx에 추가됨)
+- 9개 챕터 + 4개 엔딩 + 분기 선택지 + 상세 패널
+
+**남은 작업** → `.claude/story-quest-design.md` "구현 순서" 섹션 참조
+- Step 1: 데이터 확정 + 레이아웃 개선 + 사이드바 메뉴
+- Step 2: Backend 도메인 (UserStoryProgress)
+- Step 3: 프론트엔드 연동 (storyStore, storyApi)
+- Step 4: 추가 개선 (엔딩 보상, 가이드, 반응형)
+
+---
+
 ## 다음 단계
 
-1. **아이템 검색 API** — GET /api/v1/items?search=
-2. **관리자 기능** — 동기화 이력 UI
-3. **기타 UX 개선** — 사용자 피드백 기반
+1. **메인 스토리 Step 1** — 데이터 확정 + UI 개선
+2. **아이템 검색 API** — GET /api/v1/items?search=
+3. **관리자 기능** — 동기화 이력 UI
+4. **기타 UX 개선** — 사용자 피드백 기반
