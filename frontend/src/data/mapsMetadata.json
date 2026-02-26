@@ -71,7 +71,7 @@
     ]
   },
   "the-lab": {
-    "svgFile": "laboratory_1st.png",
+    "svgFile": "laboratory.svg",
     "defaultFloor": "First_Level",
     "coordinateRotation": 270,
     "bounds": [[-70.6, -489.0], [-336.9, -184.7]],
@@ -80,11 +80,6 @@
       { "floorId": "First_Level",     "yMin": -0.9, "yMax": 3 },
       { "floorId": "Second_Level",    "yMin": 3,    "yMax": 99 }
     ],
-    "floorImages": {
-      "Technical_Level": "laboratory_technical.png",
-      "First_Level": "laboratory_1st.png",
-      "Second_Level": "laboratory_2nd.png"
-    },
     "floors": [
       { "floorId": "Technical_Level", "floorLabel": "기술층", "floorOrder": 0 },
       { "floorId": "First_Level",     "floorLabel": "1층",    "floorOrder": 1 },

@@ -50,7 +50,7 @@ export function convertGameCoords(
       topPercent = ((gameX - x1) / (x2 - x1)) * 100;
       break;
     case 270:
-      // The Lab
+      // The Lab: 축 교환 + 상하반전 — Z→좌우, X→상하(반전)
       leftPercent = ((gameZ - z1) / dz) * 100;
       topPercent = ((gameX - x2) / (x1 - x2)) * 100;
       break;
