@@ -12,6 +12,11 @@ import { MARKER_CONFIG } from './constants/markerConfig';
 import { getContainerConfig } from './constants/containerConfig';
 import type { MarkerCategory } from '../../types/map';
 import type { PopupData } from './components/MapMarkerPopup';
+import PlayerPositionMarker from './components/PlayerPositionMarker';
+import PositionTrackerPanel from './components/PositionTrackerPanel';
+import { useTauriScreenshot } from '../../hooks/useTauriScreenshot';
+import type { MapBoundsConfig } from '../../utils/coordinateConverter';
+import mapsMetadata from '../../data/mapsMetadata.json';
 
 const CATEGORY_ICONS: Record<MarkerCategory, typeof AlertCircle> = {
   quests: AlertCircle,
@@ -28,6 +33,20 @@ export default function MapViewPage() {
     toggleLootContainerType, toggleAllLootContainers, clearCurrentMap,
   } = useMapStore();
   const { questStatuses } = useProgressStore();
+  const { position: playerPosition, history: positionHistory, watching, error: watchError, startWatching, stopWatching, isTauriAvailable } = useTauriScreenshot();
+
+  // ── 맵 좌표 변환 설정 ─────────────────────────────────────────────────────
+  const mapConfig = useMemo<MapBoundsConfig | null>(() => {
+    if (!normalizedName) return null;
+    const meta = (mapsMetadata as Record<string, any>)[normalizedName];
+    if (!meta?.bounds) return null;
+    return {
+      bounds: meta.bounds,
+      coordinateRotation: meta.coordinateRotation ?? 180,
+      floorRanges: meta.floorRanges,
+      defaultFloor: meta.defaultFloor ?? 'Ground_Level',
+    };
+  }, [normalizedName]);
 
   // ── Map / filter state ──────────────────────────────────────────────────────
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
@@ -617,7 +636,29 @@ export default function MapViewPage() {
                   activePopup={popup}
                 />
               )}
+
+              {/* 플레이어 위치 마커 */}
+              {mapBounds && (
+                <PlayerPositionMarker
+                  position={playerPosition}
+                  history={positionHistory}
+                  mapBounds={mapBounds}
+                  zoom={zoom}
+                  mapConfig={mapConfig}
+                  selectedFloor={selectedFloor}
+                />
+              )}
             </div>
+
+            {/* 위치 추적 패널 */}
+            <PositionTrackerPanel
+              position={playerPosition}
+              watching={watching}
+              error={watchError}
+              isTauriAvailable={isTauriAvailable}
+              onStartWatching={startWatching}
+              onStopWatching={stopWatching}
+            />
 
             {/* 층 선택 (zoomable 레이어 밖) */}
             {floors.length > 1 && (
