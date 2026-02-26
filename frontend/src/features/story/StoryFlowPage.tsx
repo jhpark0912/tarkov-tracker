@@ -1,9 +1,12 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { BookOpen, Check, Circle, GitBranch, Star, Play, RotateCcw, LogIn } from 'lucide-react';
+import {
+  BookOpen, Check, Circle, GitBranch, Star, Play, RotateCcw,
+  LogIn, ExternalLink, Lightbulb, Trophy, Target,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 import type { StoryChapter, StoryEnding, StoryProgress, ChapterStatus } from '../../types/story';
-import { STORY_CHAPTERS, STORY_ENDINGS, CHAPTER_MAP, ENDING_MAP } from '../../data/storyData';
+import { STORY_CHAPTERS, STORY_ENDINGS, CHAPTER_MAP, ENDING_MAP, predictEnding } from '../../data/storyData';
 import { useStoryStore } from '../../store/storyStore';
 import { useAuthStore } from '../../store/authStore';
 
@@ -85,10 +88,12 @@ function ChapterNode({
 function EndingNode({
   ending,
   selected,
+  predicted,
   onClick,
 }: {
   ending: StoryEnding;
   selected: boolean;
+  predicted: boolean;
   onClick: () => void;
 }) {
   const x = PADDING_X + ending.column * CELL_W;
@@ -98,12 +103,18 @@ function EndingNode({
     <foreignObject x={x} y={y} width={NODE_W} height={ENDING_H}>
       <div
         className={cn(
-          'h-full rounded-lg border border-border/60 bg-elevated/50 px-3 py-2 flex flex-col justify-center cursor-pointer transition-all',
+          'h-full rounded-lg border px-3 py-2 flex flex-col justify-center cursor-pointer transition-all',
+          predicted
+            ? 'border-kappa bg-kappa/10 ring-1 ring-kappa/40'
+            : 'border-border/60 bg-elevated/50',
           selected && 'ring-2 ring-accent',
         )}
         onClick={onClick}
       >
-        <span className={cn('text-xs font-bold', ending.color)}>{ending.name}</span>
+        <div className="flex items-center gap-1.5">
+          {predicted && <Target className="w-3 h-3 text-kappa" />}
+          <span className={cn('text-xs font-bold', ending.color)}>{ending.name}</span>
+        </div>
         <span className="text-[10px] text-text-muted">{ending.subtitle}</span>
       </div>
     </foreignObject>
@@ -197,6 +208,7 @@ function ChapterDetail({
 
       <p className="text-sm text-text-secondary leading-relaxed">{chapter.description}</p>
 
+      {/* 관련 맵 */}
       <div>
         <span className="text-xs font-medium text-text-muted">관련 맵</span>
         <div className="flex flex-wrap gap-1.5 mt-1">
@@ -207,6 +219,14 @@ function ChapterDetail({
           ))}
         </div>
       </div>
+
+      {/* 팁 */}
+      {chapter.tip && (
+        <div className="flex gap-2 p-3 rounded-lg bg-kappa/5 border border-kappa/20">
+          <Lightbulb className="w-4 h-4 text-kappa shrink-0 mt-0.5" />
+          <p className="text-xs text-text-secondary leading-relaxed">{chapter.tip}</p>
+        </div>
+      )}
 
       {/* 분기 선택 */}
       {chapter.choices && (
@@ -265,6 +285,19 @@ function ChapterDetail({
         </button>
       )}
 
+      {/* 위키 링크 */}
+      {chapter.wikiUrl && (
+        <a
+          href={chapter.wikiUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border text-xs text-text-muted hover:text-text hover:bg-elevated transition-all no-underline"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          위키에서 자세히 보기
+        </a>
+      )}
+
       {/* 비로그인 안내 */}
       {!isLoggedIn && status !== 'locked' && (
         <Link
@@ -279,18 +312,64 @@ function ChapterDetail({
   );
 }
 
-function EndingDetail({ ending }: { ending: StoryEnding }) {
+function EndingDetail({ ending, predicted }: { ending: StoryEnding; predicted: boolean }) {
   return (
     <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className={cn('text-lg font-bold', ending.color)}>{ending.name}</h3>
-        <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border text-text-muted">
-          엔딩
-        </span>
+        <div className="flex items-center gap-2">
+          {predicted && (
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-kappa/40 text-kappa bg-kappa/10">
+              예상 엔딩
+            </span>
+          )}
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full border border-border text-text-muted">
+            엔딩
+          </span>
+        </div>
       </div>
       <p className="text-sm text-text-secondary font-medium">{ending.subtitle}</p>
       <p className="text-sm text-text-secondary leading-relaxed">{ending.description}</p>
+
+      {/* 보상 */}
+      {ending.reward && (
+        <div className="flex gap-2 p-3 rounded-lg bg-elevated border border-border/50">
+          <Trophy className="w-4 h-4 text-kappa shrink-0 mt-0.5" />
+          <div>
+            <span className="text-xs font-medium text-text-muted">엔딩 보상</span>
+            <p className="text-xs text-text-secondary mt-0.5">{ending.reward}</p>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+/* ── 엔딩 예측 배너 ── */
+function EndingPredictionBanner({
+  predictedEndingId,
+  onClick,
+}: {
+  predictedEndingId: string;
+  onClick: () => void;
+}) {
+  const ending = ENDING_MAP.get(predictedEndingId);
+  if (!ending) return null;
+
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-kappa/30 bg-kappa/5 hover:bg-kappa/10 transition-all cursor-pointer w-full text-left"
+    >
+      <Target className="w-5 h-5 text-kappa shrink-0" />
+      <div className="flex-1 min-w-0">
+        <span className="text-xs text-text-muted">현재 경로의 예상 엔딩</span>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className={cn('text-sm font-bold', ending.color)}>{ending.name}</span>
+          <span className="text-xs text-text-muted">— {ending.subtitle}</span>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -311,14 +390,12 @@ export default function StoryFlowPage() {
 
   const isLoggedIn = !!user;
 
-  // 로그인 상태면 진행 상태 로딩
   useEffect(() => {
     if (isLoggedIn && !progressLoaded) {
       fetchProgress();
     }
   }, [isLoggedIn, progressLoaded, fetchProgress]);
 
-  // 로그인 시: 진행 상태 없으면 첫 챕터를 available로 표시
   const effectiveGetStatus = useCallback((chapterId: string): ChapterStatus => {
     if (!isLoggedIn) return 'available';
     const hasAnyProgress = Object.keys(progress).length > 0;
@@ -328,6 +405,12 @@ export default function StoryFlowPage() {
 
   const selectedChapter = CHAPTER_MAP.get(selectedId ?? '');
   const selectedEnding = ENDING_MAP.get(selectedId ?? '');
+
+  // 엔딩 예측
+  const predictedEndingId = useMemo(() => {
+    if (!isLoggedIn || Object.keys(progress).length === 0) return null;
+    return predictEnding(progress);
+  }, [isLoggedIn, progress]);
 
   const edges = useMemo(() => {
     const result: Edge[] = [];
@@ -388,14 +471,13 @@ export default function StoryFlowPage() {
   const svgW = PADDING_X * 2 + (maxCol + 1) * CELL_W;
   const svgH = PADDING_Y * 2 + (maxRow + 1) * CELL_H;
 
-  // 진행률 계산
   const completedCount = Object.values(progress).filter((p) => p.status === 'completed').length;
   const totalChapters = STORY_CHAPTERS.length;
 
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <BookOpen className="w-6 h-6 text-kappa" />
           <div>
@@ -405,7 +487,6 @@ export default function StoryFlowPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* 진행률 */}
           {isLoggedIn && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-text-muted">진행</span>
@@ -415,7 +496,6 @@ export default function StoryFlowPage() {
             </div>
           )}
 
-          {/* 초기화 버튼 */}
           {isLoggedIn && completedCount > 0 && (
             <button
               onClick={handleReset}
@@ -429,19 +509,31 @@ export default function StoryFlowPage() {
         </div>
       </div>
 
+      {/* 엔딩 예측 배너 */}
+      {predictedEndingId && (
+        <EndingPredictionBanner
+          predictedEndingId={predictedEndingId}
+          onClick={() => setSelectedId(predictedEndingId)}
+        />
+      )}
+
       {/* 범례 */}
-      <div className="flex flex-wrap gap-4 text-[11px]">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full border border-border/40 bg-surface/30 opacity-50" /> 잠김</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full border border-accent" /> 진행 가능</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full border border-kappa bg-kappa/20" /> 진행 중</span>
         <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full border border-complete bg-complete/20" /> 완료</span>
         <span className="flex items-center gap-1.5"><span className="w-6 border-t border-dashed border-kappa" /> 분기</span>
         <span className="flex items-center gap-1.5"><span className="w-6 border-t-2 border-complete" /> 선택된 경로</span>
+        {predictedEndingId && (
+          <span className="flex items-center gap-1.5"><Target className="w-2.5 h-2.5 text-kappa" /> 예상 엔딩</span>
+        )}
       </div>
 
-      <div className="flex gap-6 items-start">
+      {/* 플로우차트 + 사이드 패널 (반응형) */}
+      <div className="flex flex-col xl:flex-row gap-6 items-start">
         {/* 플로우차트 */}
-        <div className="flex-1 min-w-0 overflow-x-auto bg-surface/50 border border-border rounded-xl p-4">
+        <div className="w-full xl:flex-1 xl:min-w-0 overflow-x-auto bg-surface/50 border border-border rounded-xl p-4">
           <svg
             width={svgW}
             height={svgH}
@@ -467,6 +559,7 @@ export default function StoryFlowPage() {
                 key={ending.id}
                 ending={ending}
                 selected={selectedId === ending.id}
+                predicted={predictedEndingId === ending.id}
                 onClick={() => setSelectedId(ending.id)}
               />
             ))}
@@ -474,7 +567,7 @@ export default function StoryFlowPage() {
         </div>
 
         {/* 사이드 패널 */}
-        <div className="w-80 shrink-0">
+        <div className="w-full xl:w-80 xl:shrink-0">
           {selectedChapter ? (
             <ChapterDetail
               chapter={selectedChapter}
@@ -486,7 +579,10 @@ export default function StoryFlowPage() {
               loading={loading}
             />
           ) : selectedEnding ? (
-            <EndingDetail ending={selectedEnding} />
+            <EndingDetail
+              ending={selectedEnding}
+              predicted={predictedEndingId === selectedEnding.id}
+            />
           ) : (
             <div className="bg-surface border border-border rounded-xl p-5 text-center text-sm text-text-muted">
               챕터를 선택하세요

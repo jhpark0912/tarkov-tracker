@@ -1,4 +1,4 @@
-import type { StoryChapter, StoryEnding } from '../types/story';
+import type { StoryChapter, StoryEnding, StoryProgress } from '../types/story';
 
 export const STORY_CHAPTERS: StoryChapter[] = [
   {
@@ -9,6 +9,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     nextChapterId: 'falling_skies',
     column: 1,
     row: 0,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/Tour',
+    tip: '각 맵에서 특정 딜러의 퀘스트를 완료해야 합니다. Ground Zero에서 시작하세요.',
   },
   {
     id: 'falling_skies',
@@ -18,6 +20,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     nextChapterId: 'the_ticket',
     column: 1,
     row: 1,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/Falling_Skies',
+    tip: 'Woods와 Shoreline에서 추락 지점을 찾아야 합니다.',
   },
   {
     id: 'the_ticket',
@@ -30,6 +34,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     ],
     column: 1,
     row: 2,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/The_Ticket',
+    tip: '첫 번째 분기점입니다. 선택에 따라 스토리 경로가 완전히 달라집니다.',
   },
   {
     id: 'they_are_already_here',
@@ -39,6 +45,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     nextChapterId: 'blue_fire',
     column: 0,
     row: 3,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/They_Are_Already_Here',
+    tip: 'Kerman 루트. 여러 맵을 돌며 컬티스트 단서를 수집합니다.',
   },
   {
     id: 'batya',
@@ -48,6 +56,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     nextChapterId: 'the_labyrinth',
     column: 2,
     row: 3,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/Batya',
+    tip: 'Prapor 루트. Reserve 지하 벙커 탐험이 핵심입니다.',
   },
   {
     id: 'blue_fire',
@@ -60,6 +70,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     ],
     column: 0,
     row: 4,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/Blue_Fire',
+    tip: '두 번째 분기점. "증거 공개"를 선택하면 좋은 엔딩으로 갈 수 있습니다.',
   },
   {
     id: 'the_labyrinth',
@@ -72,6 +84,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     ],
     column: 2,
     row: 4,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/The_Labyrinth',
+    tip: '두 번째 분기점. 5억 루블이 필요하지만 더 나은 엔딩으로 이어집니다.',
   },
   {
     id: 'accidental_witness',
@@ -84,6 +98,8 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     ],
     column: 1,
     row: 5,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/Accidental_Witness',
+    tip: '최종 엔딩 분기. Kerman 전달 = Savior (최선), Prapor 전달 = Survivor.',
   },
   {
     id: 'the_unheard',
@@ -96,14 +112,52 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     ],
     column: 2,
     row: 5,
+    wikiUrl: 'https://escapefromtarkov.fandom.com/wiki/The_Unheard',
+    tip: '나쁜 엔딩 경로. Debtor가 Fallen보다는 나은 결말입니다.',
   },
 ];
 
 export const STORY_ENDINGS: StoryEnding[] = [
-  { id: 'ending_savior', name: 'Savior', subtitle: '인류를 위한 탈출', description: 'TerraGroup의 진실을 세상에 알리고 탈출에 성공한다.', color: 'text-complete', column: 0, row: 6 },
-  { id: 'ending_survivor', name: 'Survivor', subtitle: '생존자의 탈출', description: '살아남았지만, 타르코프를 파괴한 사슬의 일부가 되었다.', color: 'text-kappa', column: 1, row: 6 },
-  { id: 'ending_debtor', name: 'Debtor', subtitle: '빚진 자', description: '진실에 거의 닿았지만, 두려움 앞에 멈춰 섰다.', color: 'text-orange-400', column: 2, row: 6 },
-  { id: 'ending_fallen', name: 'Fallen', subtitle: '어둠 속으로', description: '타르코프는 무너졌고, 당신도 함께 무너졌다.', color: 'text-incomplete', column: 3, row: 6 },
+  {
+    id: 'ending_savior',
+    name: 'Savior',
+    subtitle: '인류를 위한 탈출',
+    description: 'TerraGroup의 진실을 세상에 알리고 탈출에 성공한다.',
+    color: 'text-complete',
+    column: 0,
+    row: 6,
+    reward: 'TerraGroup Labs 열쇠카드 (영구), 특수 탈출 장비',
+  },
+  {
+    id: 'ending_survivor',
+    name: 'Survivor',
+    subtitle: '생존자의 탈출',
+    description: '살아남았지만, 타르코프를 파괴한 사슬의 일부가 되었다.',
+    color: 'text-kappa',
+    column: 1,
+    row: 6,
+    reward: '군용 탈출 장비, 고급 무기 세트',
+  },
+  {
+    id: 'ending_debtor',
+    name: 'Debtor',
+    subtitle: '빚진 자',
+    description: '진실에 거의 닿았지만, 두려움 앞에 멈춰 섰다.',
+    color: 'text-orange-400',
+    column: 2,
+    row: 6,
+    reward: '기본 탈출 장비',
+  },
+  {
+    id: 'ending_fallen',
+    name: 'Fallen',
+    subtitle: '어둠 속으로',
+    description: '타르코프는 무너졌고, 당신도 함께 무너졌다.',
+    color: 'text-incomplete',
+    column: 3,
+    row: 6,
+    reward: '없음',
+  },
 ];
 
 /** 챕터 ID로 빠르게 조회하기 위한 맵 */
@@ -111,3 +165,33 @@ export const CHAPTER_MAP = new Map(STORY_CHAPTERS.map((c) => [c.id, c]));
 
 /** 엔딩 ID로 빠르게 조회하기 위한 맵 */
 export const ENDING_MAP = new Map(STORY_ENDINGS.map((e) => [e.id, e]));
+
+/**
+ * 사용자의 분기 선택 기반 엔딩 예측.
+ * 선택된 경로를 따라가며 도달 가능한 엔딩 ID를 반환한다.
+ */
+export function predictEnding(progress: Record<string, StoryProgress>): string | null {
+  // 선택지를 역순으로 추적: 마지막 분기 챕터부터 확인
+  const branchChapters = ['accidental_witness', 'the_unheard', 'the_labyrinth', 'blue_fire', 'the_ticket'];
+
+  for (const chId of branchChapters) {
+    const p = progress[chId];
+    if (!p?.choiceId) continue;
+
+    const chapter = CHAPTER_MAP.get(chId);
+    if (!chapter?.choices) continue;
+
+    const choice = chapter.choices.find((c) => c.id === p.choiceId);
+    if (!choice) continue;
+
+    // 엔딩으로 직접 연결되면 반환
+    if (choice.nextChapterId.startsWith('ending_')) {
+      return choice.nextChapterId;
+    }
+
+    // 다음 챕터가 엔딩 직전 챕터면, 재귀적으로 해당 챕터의 선택을 확인
+    // (이미 branchChapters 순서로 확인하므로 자연스럽게 처리됨)
+  }
+
+  return null;
+}

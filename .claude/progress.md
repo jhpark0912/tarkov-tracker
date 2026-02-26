@@ -142,14 +142,16 @@
 - store/storyStore.ts — Zustand (chapters, endings, progress, fetchChapters, fetchProgress, updateChapterStatus, resetProgress)
 - StoryFlowPage.tsx — storyStore 연동, 상태 변경 버튼 (진행 시작/완료 처리), 분기 선택 클릭, 초기화, 진행률 카운터, 비로그인 안내
 
-**남은 작업**
-- Step 4: 추가 개선 (엔딩 보상, 가이드, 반응형)
+#### Step 4 — 추가 개선 (완료)
+- 엔딩 예측: 사용자 분기 선택 기반 예상 엔딩 하이라이트 (배너 + 노드 표시)
+- 챕터별 가이드: 팁 박스 (Lightbulb 아이콘) + 위키 링크 버튼
+- 엔딩 보상: EndingDetail에 Trophy 아이콘 + 보상 정보 표시
+- 반응형 레이아웃: xl 이하에서 플로우차트/상세 패널 수직 배치, 헤더 flex-col
 
 ---
 
 ## 다음 단계
 
-1. **메인 스토리 Step 4** — 엔딩 보상 표시, 가이드/팁, 반응형 레이아웃
-2. **아이템 검색 API** — GET /api/v1/items?search=
+1. **아이템 검색 API** — GET /api/v1/items?search=
 3. **관리자 기능** — 동기화 이력 UI
 4. **기타 UX 개선** — 사용자 피드백 기반

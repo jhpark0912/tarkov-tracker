@@ -17,6 +17,8 @@ export interface StoryChapter {
   endingId?: string;
   column: number;
   row: number;
+  wikiUrl?: string;
+  tip?: string;
 }
 
 export interface StoryEnding {
@@ -27,6 +29,7 @@ export interface StoryEnding {
   color: string;
   column: number;
   row: number;
+  reward?: string;
 }
 
 export interface StoryProgress {
