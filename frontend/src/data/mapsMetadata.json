@@ -74,7 +74,7 @@
     "svgFile": "laboratory.svg",
     "defaultFloor": "First_Level",
     "coordinateRotation": 270,
-    "bounds": [[-70.6, -489.0], [-336.9, -184.7]],
+    "bounds": [[-93.9, -445.6], [-290.1, -219.4]],
     "floorRanges": [
       { "floorId": "Technical_Level", "yMin": -99, "yMax": -0.9 },
       { "floorId": "First_Level",     "yMin": -0.9, "yMax": 3 },
