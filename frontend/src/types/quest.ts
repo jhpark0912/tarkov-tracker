@@ -51,7 +51,6 @@ export interface QuestListItem {
   lightkeeperRequired: boolean;
   minPlayerLevel: number;
   objectiveCount: number;
-  requiredItemCount: number;
   userStatus?: string;
 }
 

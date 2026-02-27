@@ -35,10 +35,8 @@ public class QuestService {
                                              Boolean lightkeeperRequired, String mapNormalizedName) {
         Long traderId = null;
         if (traderName != null) {
-            traderId = traderRepository.findAll().stream()
-                    .filter(t -> t.getName().equalsIgnoreCase(traderName))
+            traderId = traderRepository.findByNameIgnoreCase(traderName)
                     .map(t -> t.getId())
-                    .findFirst()
                     .orElse(null);
         }
 
@@ -82,6 +80,13 @@ public class QuestService {
         Quest root = questRepository.findByIdWithDetails(questId)
                 .orElseThrow(() -> new ResourceNotFoundException("퀘스트를 찾을 수 없습니다: " + questId));
 
+        // 모든 선행조건 관계 한 번에 로드 (N+1 방지)
+        List<QuestPrerequisite> allPrereqs = questPrerequisiteRepository.findAllWithDetails();
+        Map<Long, List<QuestPrerequisite>> prereqMap = new HashMap<>();
+        for (QuestPrerequisite p : allPrereqs) {
+            prereqMap.computeIfAbsent(p.getQuest().getId(), k -> new ArrayList<>()).add(p);
+        }
+
         Set<Long> visited = new HashSet<>();
         List<QuestTreeResponse.TreeNode> nodes = new ArrayList<>();
         List<QuestTreeResponse.TreeEdge> edges = new ArrayList<>();
@@ -96,7 +101,7 @@ public class QuestService {
             int size = queue.size();
             for (int i = 0; i < size; i++) {
                 Quest current = queue.poll();
-                List<QuestPrerequisite> prereqs = questPrerequisiteRepository.findByQuestWithPrereqs(current);
+                List<QuestPrerequisite> prereqs = prereqMap.getOrDefault(current.getId(), List.of());
                 for (QuestPrerequisite p : prereqs) {
                     Quest prereq = p.getPrereqQuest();
                     if (prereq == null || prereq.getRemoved()) continue;

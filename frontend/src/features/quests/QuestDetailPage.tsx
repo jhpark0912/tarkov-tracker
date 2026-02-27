@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Crown, Compass, ExternalLink, MapPin, Check, Circle, Package, Loader2, GitBranch } from 'lucide-react';
 import * as Progress from '@radix-ui/react-progress';
 import * as Checkbox from '@radix-ui/react-checkbox';
@@ -37,6 +37,7 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
 
 export default function QuestDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const questId = Number(id);
 
   const { currentDetail: quest, loading, error, fetchDetail, clearDetail } = useQuestStore();
@@ -300,7 +301,7 @@ export default function QuestDetailPage() {
                   <div className="bg-surface-alt rounded-xl overflow-hidden border border-border/50 mb-3">
                     <QuestPrereqTree
                       questId={questId}
-                      onNodeClick={(id) => { if (id !== questId) window.location.href = `/quests/${id}`; }}
+                      onNodeClick={(id) => { if (id !== questId) navigate(`/quests/${id}`); }}
                     />
                   </div>
                   {/* 리스트 폴백 */}

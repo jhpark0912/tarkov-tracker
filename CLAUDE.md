@@ -153,6 +153,15 @@ docs/
 
 DB 스키마, REST API 명세, DTO 구조, GraphQL 쿼리, 컴포넌트 상세, Zustand Store 인터페이스, 개발 환경 설정은 **`docs/design.md`** 참조.
 
+## 구현 완료 검증 규칙
+
+기능 구현 완료 후, 커밋 전에 아래를 검증한다.
+
+- **정합성**: 변경한 파일과 연관된 파일(Backend DTO ↔ Frontend 타입, 라우터 ↔ 컴포넌트)의 동기화 확인. 교체된 파일은 삭제 및 참조 정리.
+- **방어 코딩**: 외부 주입 파라미터(인증 정보 등)의 null 가드. 새 엔드포인트의 Security 경로 매핑 확인.
+- **성능**: 루프 내 DB 쿼리 금지. 동일 서비스 내 기존 패턴과 일관성 유지.
+- **정리**: 미사용 import, 의존성, 파일 제거.
+
 # 📏 Conventions
 - Git: `.claude/COMMIT_CONVENTION.md` (예: `:sparkles: [feat]`)
 - Logging: `logger.debug()` only. No `print()` or `console.log` in production.

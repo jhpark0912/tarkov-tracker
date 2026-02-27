@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface TraderRepository extends JpaRepository<Trader, Long> {
     Optional<Trader> findByApiId(String apiId);
+    Optional<Trader> findByNameIgnoreCase(String name);
 }
