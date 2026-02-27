@@ -29,4 +29,8 @@ public class HideoutItemRequirement {
     @Column(nullable = false)
     @Builder.Default
     private Integer count = 1;
+
+    public void updateCount(Integer count) {
+        this.count = count;
+    }
 }

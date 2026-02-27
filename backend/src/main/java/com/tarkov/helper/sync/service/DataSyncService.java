@@ -43,6 +43,7 @@ public class DataSyncService {
     private final QuestPrerequisiteRepository questPrerequisiteRepository;
     private final HideoutStationRepository hideoutStationRepository;
     private final HideoutLevelRepository hideoutLevelRepository;
+    private final com.tarkov.helper.domain.progress.repository.UserHideoutItemProgressRepository userHideoutItemProgressRepository;
     private final MapPositionSyncService mapPositionSyncService;
     private final CoordinateConverter coordinateConverter;
     private final ObjectMapper objectMapper;
@@ -404,7 +405,7 @@ public class DataSyncService {
             CoordinateConverter.ConvertedPosition converted = coordinateConverter.convert(
                     pos.getX(), gameY, pos.getZ(),
                     meta.bounds(), meta.coordinateRotation(),
-                    meta.floorRanges(), meta.defaultFloor());
+                    meta.floorRanges(), meta.floorZones(), meta.defaultFloor());
 
             if (converted.positionX() != null && converted.positionY() != null) {
                 objective.updatePosition(converted.positionX(), converted.positionY(), converted.floorId());
@@ -485,49 +486,34 @@ public class DataSyncService {
 
     private void syncHideoutLevels(HideoutStation station, List<TarkovHideoutLevelDto> levelDtos,
                                     Map<String, Item> itemCache) {
-        // 기존 레벨 삭제 후 재생성 (cascade로 요구사항도 삭제)
-        station.getLevels().clear();
-        hideoutStationRepository.flush();
+        Set<Integer> processedLevelNumbers = new HashSet<>();
 
         for (TarkovHideoutLevelDto dto : levelDtos) {
-            HideoutLevel level = HideoutLevel.builder()
-                    .station(station)
-                    .level(dto.getLevel() != null ? dto.getLevel() : 0)
-                    .constructionTime(dto.getConstructionTime())
-                    .description(dto.getDescription())
-                    .build();
-            level = hideoutLevelRepository.save(level);
+            int levelNumber = dto.getLevel() != null ? dto.getLevel() : 0;
+            processedLevelNumbers.add(levelNumber);
 
-            // 아이템 요구사항
-            if (dto.getItemRequirements() != null) {
-                for (TarkovHideoutLevelDto.ItemRequirement req : dto.getItemRequirements()) {
-                    if (req.getItem() == null || req.getItem().getId() == null) continue;
-                    // 아이템 캐시에 없으면 upsert
-                    Item item = itemCache.get(req.getItem().getId());
-                    if (item == null) {
-                        item = itemRepository.findByApiId(req.getItem().getId()).orElse(null);
-                        if (item == null) {
-                            item = itemRepository.save(Item.builder()
-                                    .apiId(req.getItem().getId())
-                                    .name(req.getItem().getName() != null ? req.getItem().getName() : "Unknown")
-                                    .shortName(req.getItem().getShortName())
-                                    .iconUrl(req.getItem().getIconLink())
-                                    .wikiLink(req.getItem().getWikiLink())
-                                    .width(req.getItem().getWidth())
-                                    .height(req.getItem().getHeight())
-                                    .build());
-                        }
-                        itemCache.put(req.getItem().getId(), item);
-                    }
-                    level.getItemRequirements().add(HideoutItemRequirement.builder()
-                            .hideoutLevel(level)
-                            .item(item)
-                            .count(req.getCount() != null ? req.getCount() : 1)
-                            .build());
-                }
+            // 레벨 upsert
+            HideoutLevel level = hideoutLevelRepository.findByStationAndLevel(station, levelNumber).orElse(null);
+            if (level == null) {
+                level = hideoutLevelRepository.save(HideoutLevel.builder()
+                        .station(station)
+                        .level(levelNumber)
+                        .constructionTime(dto.getConstructionTime())
+                        .description(dto.getDescription())
+                        .build());
+                station.getLevels().add(level);
+            } else {
+                level.update(dto.getConstructionTime(), dto.getDescription());
             }
 
-            // 스테이션 요구사항
+            // 아이템 요구사항 upsert (PK 유지 — UserHideoutItemProgress FK 보존)
+            syncHideoutItemRequirements(level, dto.getItemRequirements(), itemCache);
+
+            // station/skill/trader 요구사항은 유저 진행 FK 없으므로 clear + 재생성
+            level.getStationRequirements().clear();
+            level.getSkillRequirements().clear();
+            level.getTraderRequirements().clear();
+
             if (dto.getStationLevelRequirements() != null) {
                 for (TarkovHideoutLevelDto.StationRequirement req : dto.getStationLevelRequirements()) {
                     if (req.getStation() == null) continue;
@@ -540,7 +526,6 @@ public class DataSyncService {
                 }
             }
 
-            // 스킬 요구사항
             if (dto.getSkillRequirements() != null) {
                 for (TarkovHideoutLevelDto.SkillRequirement req : dto.getSkillRequirements()) {
                     level.getSkillRequirements().add(HideoutSkillRequirement.builder()
@@ -551,7 +536,6 @@ public class DataSyncService {
                 }
             }
 
-            // 트레이더 요구사항
             if (dto.getTraderRequirements() != null) {
                 for (TarkovHideoutLevelDto.TraderRequirement req : dto.getTraderRequirements()) {
                     if (req.getTrader() == null) continue;
@@ -564,6 +548,83 @@ public class DataSyncService {
                 }
             }
         }
+
+        // API에서 삭제된 레벨 정리
+        List<HideoutLevel> removedLevels = station.getLevels().stream()
+                .filter(l -> !processedLevelNumbers.contains(l.getLevel()))
+                .toList();
+        if (!removedLevels.isEmpty()) {
+            List<Long> removedReqIds = removedLevels.stream()
+                    .flatMap(l -> l.getItemRequirements().stream())
+                    .map(HideoutItemRequirement::getId)
+                    .collect(Collectors.toList());
+            if (!removedReqIds.isEmpty()) {
+                userHideoutItemProgressRepository.deleteAllByRequirementIdIn(removedReqIds);
+            }
+            station.getLevels().removeAll(removedLevels);
+        }
+    }
+
+    private void syncHideoutItemRequirements(HideoutLevel level,
+                                              List<TarkovHideoutLevelDto.ItemRequirement> reqDtos,
+                                              Map<String, Item> itemCache) {
+        // 기존 요구사항을 item apiId 기준 Map으로 변환
+        Map<String, HideoutItemRequirement> existingByItemApiId = level.getItemRequirements().stream()
+                .collect(Collectors.toMap(r -> r.getItem().getApiId(), r -> r));
+        Set<String> processedItemApiIds = new HashSet<>();
+
+        if (reqDtos != null) {
+            for (TarkovHideoutLevelDto.ItemRequirement req : reqDtos) {
+                if (req.getItem() == null || req.getItem().getId() == null) continue;
+
+                Item item = resolveItem(req.getItem(), itemCache);
+                if (item == null) continue;
+
+                processedItemApiIds.add(item.getApiId());
+
+                HideoutItemRequirement existing = existingByItemApiId.get(item.getApiId());
+                if (existing != null) {
+                    existing.updateCount(req.getCount() != null ? req.getCount() : 1);
+                } else {
+                    level.getItemRequirements().add(HideoutItemRequirement.builder()
+                            .hideoutLevel(level)
+                            .item(item)
+                            .count(req.getCount() != null ? req.getCount() : 1)
+                            .build());
+                }
+            }
+        }
+
+        // API에서 사라진 요구사항 삭제
+        List<HideoutItemRequirement> toRemove = existingByItemApiId.entrySet().stream()
+                .filter(e -> !processedItemApiIds.contains(e.getKey()))
+                .map(Map.Entry::getValue)
+                .toList();
+        if (!toRemove.isEmpty()) {
+            List<Long> removedIds = toRemove.stream().map(HideoutItemRequirement::getId).collect(Collectors.toList());
+            userHideoutItemProgressRepository.deleteAllByRequirementIdIn(removedIds);
+            level.getItemRequirements().removeAll(toRemove);
+        }
+    }
+
+    private Item resolveItem(TarkovItemDto itemDto, Map<String, Item> itemCache) {
+        Item item = itemCache.get(itemDto.getId());
+        if (item == null) {
+            item = itemRepository.findByApiId(itemDto.getId()).orElse(null);
+            if (item == null) {
+                item = itemRepository.save(Item.builder()
+                        .apiId(itemDto.getId())
+                        .name(itemDto.getName() != null ? itemDto.getName() : "Unknown")
+                        .shortName(itemDto.getShortName())
+                        .iconUrl(itemDto.getIconLink())
+                        .wikiLink(itemDto.getWikiLink())
+                        .width(itemDto.getWidth())
+                        .height(itemDto.getHeight())
+                        .build());
+            }
+            itemCache.put(itemDto.getId(), item);
+        }
+        return item;
     }
 
     // ─── Soft Delete ───────────────────────────────────────────────────────────
@@ -626,15 +687,19 @@ public class DataSyncService {
     record MapMetadata(String svgFile, String defaultFloor, Integer coordinateRotation,
                        List<FloorMetadata> floors, List<String> aliases,
                        double[][] bounds, List<FloorRangeMetadata> floorRanges,
+                       List<FloorZoneMetadata> floorZones,
                        Map<String, String> floorImages) {
         MapMetadata() {
-            this(null, null, 0, List.of(), List.of(), null, List.of(), null);
+            this(null, null, 0, List.of(), List.of(), null, List.of(), List.of(), null);
         }
     }
 
     record FloorMetadata(String floorId, String floorLabel, Integer floorOrder) {}
 
     record FloorRangeMetadata(String floorId, double yMin, double yMax) {}
+
+    record FloorZoneMetadata(double xMin, double xMax, double zMin, double zMax,
+                             List<FloorRangeMetadata> floorRanges) {}
 
     record GpsData(String map, Double leftPercent, Double topPercent, String floor) {}
 
@@ -646,9 +711,18 @@ public class DataSyncService {
                         .map(fr -> new CoordinateConverter.FloorRange(fr.floorId(), fr.yMin(), fr.yMax()))
                         .collect(Collectors.toList())
                     : List.of();
+            List<CoordinateConverter.FloorZone> zones = meta.floorZones() != null
+                    ? meta.floorZones().stream()
+                        .map(fz -> new CoordinateConverter.FloorZone(
+                                fz.xMin(), fz.xMax(), fz.zMin(), fz.zMax(),
+                                fz.floorRanges().stream()
+                                        .map(fr -> new CoordinateConverter.FloorRange(fr.floorId(), fr.yMin(), fr.yMax()))
+                                        .collect(Collectors.toList())))
+                        .collect(Collectors.toList())
+                    : List.of();
             result.put(key, new MapPositionSyncService.MapPositionMeta(
                     meta.bounds(), meta.coordinateRotation() != null ? meta.coordinateRotation() : 180,
-                    ranges, meta.defaultFloor()));
+                    ranges, zones, meta.defaultFloor()));
         });
         return result;
     }
