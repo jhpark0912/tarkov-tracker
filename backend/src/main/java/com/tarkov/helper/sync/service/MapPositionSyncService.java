@@ -24,6 +24,7 @@ public class MapPositionSyncService {
 
     public record MapPositionMeta(double[][] bounds, int coordinateRotation,
                                   List<CoordinateConverter.FloorRange> floorRanges,
+                                  List<CoordinateConverter.FloorZone> floorZones,
                                   String defaultFloor) {}
 
     public int[] syncMapPositions(List<TarkovMapDto> apiMaps,
@@ -39,13 +40,14 @@ public class MapPositionSyncService {
             double[][] bounds = meta != null ? meta.bounds() : null;
             int rotation = meta != null ? meta.coordinateRotation() : 180;
             List<CoordinateConverter.FloorRange> floorRanges = meta != null ? meta.floorRanges() : null;
+            List<CoordinateConverter.FloorZone> floorZones = meta != null ? meta.floorZones() : null;
             String defaultFloor = meta != null ? meta.defaultFloor() : null;
 
             // 탈출구
             if (dto.getExtracts() != null) {
                 mapExtractRepository.deleteByGameMap(gameMap);
                 for (TarkovExtractDto ext : dto.getExtracts()) {
-                    CoordinateConverter.ConvertedPosition pos = convertPosition(ext.getPosition(), bounds, rotation, floorRanges, defaultFloor);
+                    CoordinateConverter.ConvertedPosition pos = convertPosition(ext.getPosition(), bounds, rotation, floorRanges, floorZones, defaultFloor);
                     mapExtractRepository.save(MapExtract.builder()
                             .gameMap(gameMap)
                             .apiId(ext.getId())
@@ -63,7 +65,7 @@ public class MapPositionSyncService {
             if (dto.getLocks() != null) {
                 mapLockRepository.deleteByGameMap(gameMap);
                 for (TarkovLockDto lock : dto.getLocks()) {
-                    CoordinateConverter.ConvertedPosition pos = convertPosition(lock.getPosition(), bounds, rotation, floorRanges, defaultFloor);
+                    CoordinateConverter.ConvertedPosition pos = convertPosition(lock.getPosition(), bounds, rotation, floorRanges, floorZones, defaultFloor);
                     TarkovKeyDto key = lock.getKey();
                     mapLockRepository.save(MapLock.builder()
                             .gameMap(gameMap)
@@ -86,7 +88,7 @@ public class MapPositionSyncService {
                 mapLootContainerRepository.deleteByGameMap(gameMap);
                 for (TarkovLootContainerDto lc : dto.getLootContainers()) {
                     if (lc.getLootContainer() == null) continue;
-                    CoordinateConverter.ConvertedPosition pos = convertPosition(lc.getPosition(), bounds, rotation, floorRanges, defaultFloor);
+                    CoordinateConverter.ConvertedPosition pos = convertPosition(lc.getPosition(), bounds, rotation, floorRanges, floorZones, defaultFloor);
                     mapLootContainerRepository.save(MapLootContainer.builder()
                             .gameMap(gameMap)
                             .containerName(lc.getLootContainer().getName())
@@ -107,7 +109,8 @@ public class MapPositionSyncService {
 
     private CoordinateConverter.ConvertedPosition convertPosition(
             TarkovPositionDto position, double[][] bounds, int rotation,
-            List<CoordinateConverter.FloorRange> floorRanges, String defaultFloor) {
+            List<CoordinateConverter.FloorRange> floorRanges,
+            List<CoordinateConverter.FloorZone> floorZones, String defaultFloor) {
         if (position == null || position.getX() == null || position.getZ() == null) {
             return new CoordinateConverter.ConvertedPosition(null, null, defaultFloor);
         }
@@ -117,6 +120,6 @@ public class MapPositionSyncService {
         double gameY = position.getY() != null ? position.getY() : 0;
         return coordinateConverter.convert(
                 position.getX(), gameY, position.getZ(),
-                bounds, rotation, floorRanges, defaultFloor);
+                bounds, rotation, floorRanges, floorZones, defaultFloor);
     }
 }

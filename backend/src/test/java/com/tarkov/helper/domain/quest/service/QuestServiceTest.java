@@ -81,10 +81,10 @@ class QuestServiceTest {
             GameMap map = createMap(1L, "Customs", "customs");
             Quest quest = createQuest(1L, "Debut", trader, map, true);
 
-            given(questRepository.findWithFilters(null, null, null))
+            given(questRepository.findWithFilters(null, null, null, null))
                     .willReturn(List.of(quest));
 
-            List<QuestListItem> result = questService.getQuestList(null, null, null);
+            List<QuestListItem> result = questService.getQuestList(null, null, null, null);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getName()).isEqualTo("Debut");
@@ -94,11 +94,11 @@ class QuestServiceTest {
         @DisplayName("트레이더 이름으로 필터")
         void filterByTrader() {
             Trader prapor = createTrader(1L, "Prapor");
-            given(traderRepository.findAll()).willReturn(List.of(prapor));
-            given(questRepository.findWithFilters(1L, null, null))
+            given(traderRepository.findByNameIgnoreCase("Prapor")).willReturn(Optional.of(prapor));
+            given(questRepository.findWithFilters(1L, null, null, null))
                     .willReturn(List.of(createQuest(1L, "Debut", prapor, null, false)));
 
-            List<QuestListItem> result = questService.getQuestList("Prapor", null, null);
+            List<QuestListItem> result = questService.getQuestList("Prapor", null, null, null);
 
             assertThat(result).hasSize(1);
         }
@@ -106,10 +106,10 @@ class QuestServiceTest {
         @Test
         @DisplayName("카파 필터")
         void filterByKappa() {
-            given(questRepository.findWithFilters(null, true, null))
+            given(questRepository.findWithFilters(null, true, null, null))
                     .willReturn(List.of(createQuest(1L, "KappaQuest", null, null, true)));
 
-            List<QuestListItem> result = questService.getQuestList(null, true, null);
+            List<QuestListItem> result = questService.getQuestList(null, true, null, null);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getKappaRequired()).isTrue();
@@ -120,10 +120,10 @@ class QuestServiceTest {
         void filterByMap() {
             GameMap customs = createMap(1L, "Customs", "customs");
             given(gameMapRepository.findByNormalizedName("customs")).willReturn(Optional.of(customs));
-            given(questRepository.findWithFilters(null, null, 1L))
+            given(questRepository.findWithFilters(null, null, null, 1L))
                     .willReturn(List.of(createQuest(1L, "Debut", null, customs, false)));
 
-            List<QuestListItem> result = questService.getQuestList(null, null, "customs");
+            List<QuestListItem> result = questService.getQuestList(null, null, null, "customs");
 
             assertThat(result).hasSize(1);
         }
@@ -131,11 +131,11 @@ class QuestServiceTest {
         @Test
         @DisplayName("존재하지 않는 트레이더 필터 시 빈 결과")
         void filterByNonExistentTrader() {
-            given(traderRepository.findAll()).willReturn(List.of());
-            given(questRepository.findWithFilters(null, null, null))
+            given(traderRepository.findByNameIgnoreCase("NonExistent")).willReturn(Optional.empty());
+            given(questRepository.findWithFilters(null, null, null, null))
                     .willReturn(List.of());
 
-            List<QuestListItem> result = questService.getQuestList("NonExistent", null, null);
+            List<QuestListItem> result = questService.getQuestList("NonExistent", null, null, null);
 
             assertThat(result).isEmpty();
         }

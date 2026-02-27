@@ -41,8 +41,23 @@
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 180,
     "bounds": [[506, -405], [-1060, 618]],
+    "floorZones": [
+      {
+        "xMin": -370, "xMax": -135,
+        "zMin": -155, "zMax": -65,
+        "floorRanges": [
+          { "floorId": "Underground_Level", "yMin": -99, "yMax": -4.5 },
+          { "floorId": "Ground_Level",      "yMin": -4.5, "yMax": -1.5 },
+          { "floorId": "Second_Floor",      "yMin": -1.5, "yMax": 1.0 },
+          { "floorId": "Third_Floor",       "yMin": 1.0,  "yMax": 99 }
+        ]
+      }
+    ],
     "floors": [
-      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+      { "floorId": "Underground_Level", "floorLabel": "지하",  "floorOrder": 0 },
+      { "floorId": "Ground_Level",      "floorLabel": "지상",  "floorOrder": 1 },
+      { "floorId": "Second_Floor",      "floorLabel": "2층",   "floorOrder": 2 },
+      { "floorId": "Third_Floor",       "floorLabel": "3층",   "floorOrder": 3 }
     ]
   },
   "interchange": {
@@ -66,8 +81,13 @@
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 180,
     "bounds": [[289, -338], [-303, 336]],
+    "floorRanges": [
+      { "floorId": "Bunkers",      "yMin": -99, "yMax": -8 },
+      { "floorId": "Ground_Level", "yMin": -8,  "yMax": 99 }
+    ],
     "floors": [
-      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 0 }
+      { "floorId": "Bunkers",      "floorLabel": "벙커", "floorOrder": 0 },
+      { "floorId": "Ground_Level", "floorLabel": "지상", "floorOrder": 1 }
     ]
   },
   "the-lab": {

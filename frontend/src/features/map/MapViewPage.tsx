@@ -204,8 +204,10 @@ export default function MapViewPage() {
 
   // ── SVG 그룹 합침 설정 (여러 SVG 그룹을 하나의 논리 층으로 통합) ────────────
   // Ground Zero: Ground_Level + First_Floor → 1층
+  // Shoreline: Ground_Level + First_Floor → 지상 (리조트 1층 = 야외 지상)
   const SVG_GROUP_MERGE: Record<string, Record<string, string[]>> = {
     'ground-zero': { 'Ground_Level': ['Ground_Level', 'First_Floor'] },
+    'shoreline': { 'Ground_Level': ['Ground_Level', 'First_Floor'] },
   };
 
   // ── 층 가시성 (SVG 그룹 직접 조작) ──────────────────────────────────────────

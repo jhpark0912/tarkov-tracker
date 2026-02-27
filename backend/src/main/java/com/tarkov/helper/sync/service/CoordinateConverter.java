@@ -13,11 +13,16 @@ public class CoordinateConverter {
 
     public record FloorRange(String floorId, double yMin, double yMax) {}
 
+    public record FloorZone(double xMin, double xMax, double zMin, double zMax,
+                            List<FloorRange> floorRanges) {}
+
     public record ConvertedPosition(Double positionX, Double positionY, String floorId) {}
 
     public ConvertedPosition convert(double gameX, double gameY, double gameZ,
                                      double[][] bounds, int coordinateRotation,
-                                     List<FloorRange> floorRanges, String defaultFloor) {
+                                     List<FloorRange> floorRanges,
+                                     List<FloorZone> floorZones,
+                                     String defaultFloor) {
         if (bounds == null || bounds.length < 2) {
             return new ConvertedPosition(null, null, defaultFloor);
         }
@@ -59,18 +64,35 @@ public class CoordinateConverter {
         leftPercent = Math.max(0, Math.min(100, leftPercent));
         topPercent = Math.max(0, Math.min(100, topPercent));
 
-        String floorId = detectFloor(gameY, floorRanges, defaultFloor);
+        String floorId = detectFloor(gameX, gameY, gameZ, floorRanges, floorZones, defaultFloor);
 
         return new ConvertedPosition(leftPercent, topPercent, floorId);
     }
 
-    private String detectFloor(double gameY, List<FloorRange> floorRanges, String defaultFloor) {
-        if (floorRanges == null || floorRanges.isEmpty()) {
-            return defaultFloor;
+    private String detectFloor(double gameX, double gameY, double gameZ,
+                               List<FloorRange> floorRanges,
+                               List<FloorZone> floorZones,
+                               String defaultFloor) {
+        // 1) floorZones 우선 체크 (건물 영역 기반)
+        if (floorZones != null) {
+            for (FloorZone zone : floorZones) {
+                if (gameX >= zone.xMin() && gameX <= zone.xMax() &&
+                    gameZ >= zone.zMin() && gameZ <= zone.zMax()) {
+                    for (FloorRange range : zone.floorRanges()) {
+                        if (gameY >= range.yMin() && gameY < range.yMax()) {
+                            return range.floorId();
+                        }
+                    }
+                    return defaultFloor;
+                }
+            }
         }
-        for (FloorRange range : floorRanges) {
-            if (gameY >= range.yMin() && gameY < range.yMax()) {
-                return range.floorId();
+        // 2) 기존 맵 레벨 floorRanges
+        if (floorRanges != null && !floorRanges.isEmpty()) {
+            for (FloorRange range : floorRanges) {
+                if (gameY >= range.yMin() && gameY < range.yMax()) {
+                    return range.floorId();
+                }
             }
         }
         return defaultFloor;

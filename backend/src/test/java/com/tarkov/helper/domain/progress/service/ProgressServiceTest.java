@@ -9,7 +9,10 @@ import com.tarkov.helper.domain.progress.dto.UserProgressResponse;
 import com.tarkov.helper.domain.progress.entity.UserItemProgress;
 import com.tarkov.helper.domain.progress.entity.UserQuestProgress;
 import com.tarkov.helper.domain.progress.entity.UserQuestProgress.QuestStatus;
+import com.tarkov.helper.domain.progress.repository.UserHideoutItemProgressRepository;
+import com.tarkov.helper.domain.progress.repository.UserHideoutProgressRepository;
 import com.tarkov.helper.domain.progress.repository.UserItemProgressRepository;
+import com.tarkov.helper.domain.progress.repository.UserKeyProgressRepository;
 import com.tarkov.helper.domain.progress.repository.UserQuestProgressRepository;
 import com.tarkov.helper.domain.quest.entity.Quest;
 import com.tarkov.helper.domain.quest.entity.QuestObjective;
@@ -43,6 +46,15 @@ class ProgressServiceTest {
 
     @Mock
     private UserItemProgressRepository itemProgressRepo;
+
+    @Mock
+    private UserKeyProgressRepository keyProgressRepo;
+
+    @Mock
+    private UserHideoutProgressRepository hideoutProgressRepo;
+
+    @Mock
+    private UserHideoutItemProgressRepository hideoutItemProgressRepo;
 
     @Mock
     private QuestRepository questRepository;
@@ -252,6 +264,9 @@ class ProgressServiceTest {
 
             verify(itemProgressRepo).deleteAllByUserId(1L);
             verify(questProgressRepo).deleteAllByUserId(1L);
+            verify(keyProgressRepo).deleteAllByUserId(1L);
+            verify(hideoutItemProgressRepo).deleteAllByUserId(1L);
+            verify(hideoutProgressRepo).deleteAllByUserId(1L);
         }
     }
 }

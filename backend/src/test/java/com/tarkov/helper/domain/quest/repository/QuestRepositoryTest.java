@@ -71,7 +71,7 @@ class QuestRepositoryTest {
     @Test
     @DisplayName("findWithFilters: 필터 없이 전체 조회")
     void findWithFiltersNoFilter() {
-        List<Quest> quests = questRepository.findWithFilters(null, null, null);
+        List<Quest> quests = questRepository.findWithFilters(null, null, null, null);
 
         assertThat(quests).hasSize(2); // removed 제외
     }
@@ -79,7 +79,7 @@ class QuestRepositoryTest {
     @Test
     @DisplayName("findWithFilters: 트레이더 필터")
     void findWithFiltersTrader() {
-        List<Quest> quests = questRepository.findWithFilters(prapor.getId(), null, null);
+        List<Quest> quests = questRepository.findWithFilters(prapor.getId(), null, null, null);
 
         assertThat(quests).hasSize(1);
         assertThat(quests.get(0).getName()).isEqualTo("Debut");
@@ -88,7 +88,7 @@ class QuestRepositoryTest {
     @Test
     @DisplayName("findWithFilters: 카파 필터")
     void findWithFiltersKappa() {
-        List<Quest> quests = questRepository.findWithFilters(null, true, null);
+        List<Quest> quests = questRepository.findWithFilters(null, true, null, null);
 
         assertThat(quests).hasSize(1);
         assertThat(quests.get(0).getKappaRequired()).isTrue();
@@ -97,7 +97,7 @@ class QuestRepositoryTest {
     @Test
     @DisplayName("findWithFilters: 맵 필터")
     void findWithFiltersMap() {
-        List<Quest> quests = questRepository.findWithFilters(null, null, woods.getId());
+        List<Quest> quests = questRepository.findWithFilters(null, null, null, woods.getId());
 
         assertThat(quests).hasSize(1);
         assertThat(quests.get(0).getMap().getName()).isEqualTo("Woods");
@@ -106,7 +106,7 @@ class QuestRepositoryTest {
     @Test
     @DisplayName("findWithFilters: 복합 필터")
     void findWithFiltersCombined() {
-        List<Quest> quests = questRepository.findWithFilters(prapor.getId(), true, customs.getId());
+        List<Quest> quests = questRepository.findWithFilters(prapor.getId(), true, null, customs.getId());
 
         assertThat(quests).hasSize(1);
         assertThat(quests.get(0).getName()).isEqualTo("Debut");

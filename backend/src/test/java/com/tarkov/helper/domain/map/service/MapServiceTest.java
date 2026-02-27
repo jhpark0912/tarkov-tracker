@@ -38,6 +38,9 @@ class MapServiceTest {
     @Mock
     private MapLockRepository mapLockRepository;
 
+    @Mock
+    private MapLootContainerRepository mapLootContainerRepository;
+
     @InjectMocks
     private MapService mapService;
 
@@ -128,11 +131,13 @@ class MapServiceTest {
             given(gameMapRepository.findByNormalizedName("customs")).willReturn(Optional.of(customs));
             given(mapExtractRepository.findByGameMap(customs)).willReturn(List.of());
             given(mapLockRepository.findByGameMap(customs)).willReturn(List.of());
+            given(mapLootContainerRepository.findByGameMap(customs)).willReturn(List.of());
 
             MapPositionData positions = mapService.getMapPositions("customs");
 
             assertThat(positions.getExtracts()).isEmpty();
             assertThat(positions.getLocks()).isEmpty();
+            assertThat(positions.getLootContainers()).isEmpty();
         }
 
         @Test
