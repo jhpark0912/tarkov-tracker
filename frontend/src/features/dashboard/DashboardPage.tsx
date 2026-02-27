@@ -53,12 +53,15 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-  const { summary, fetchSummary } = useProgressStore();
+  const { summary, fetchSummary, questStatuses, fetchProgress } = useProgressStore();
   const { token } = useAuthStore();
 
   useEffect(() => {
-    if (token) fetchSummary();
-  }, [token, fetchSummary]);
+    if (token) {
+      fetchSummary();
+      fetchProgress();
+    }
+  }, [token, fetchSummary, fetchProgress]);
 
   const totalQuests = summary?.totalQuests ?? 0;
   const completedQuests = summary?.completedQuests ?? 0;
@@ -68,7 +71,6 @@ export default function DashboardPage() {
   const kappaPct = (summary?.kappaQuests.percent ?? 0).toFixed(1);
   const traderProgress = summary?.byTrader ?? [];
   const mapProgress = summary?.byMap ?? [];
-  const { questStatuses } = useProgressStore();
   const inProgressCount = Object.values(questStatuses).filter(s => s === 'IN_PROGRESS').length;
 
   const topMap = useMemo(() => {
@@ -133,7 +135,7 @@ export default function DashboardPage() {
                     <circle
                       cx="50" cy="50" r="42" fill="none"
                       stroke="var(--color-complete)" strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray={`${(completedQuests / totalQuests) * 264} 264`}
+                      strokeDasharray={`${totalQuests > 0 ? (completedQuests / totalQuests) * 264 : 0} 264`}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
