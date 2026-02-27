@@ -73,7 +73,8 @@ export default function DashboardPage() {
 
   const topMap = useMemo(() => {
     if (!mapProgress.length) return '-';
-    const sorted = [...mapProgress].sort((a, b) => b.total - a.total);
+    const sorted = [...mapProgress].sort((a, b) => b.completed - a.completed);
+    if (sorted[0].completed === 0) return '-';
     return sorted[0].mapName;
   }, [mapProgress]);
 
