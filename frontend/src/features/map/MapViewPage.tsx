@@ -5,6 +5,8 @@ import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useMapStore } from '../../store/mapStore';
 import { useProgressStore } from '../../store/progressStore';
+import { useKeyStore } from '../../store/keyStore';
+import { useAuthStore } from '../../store/authStore';
 import MapQuestPanel from './components/MapQuestPanel';
 import MapMarkerLayer from './components/MapMarkerLayer';
 import MapMarkerPopup from './components/MapMarkerPopup';
@@ -33,6 +35,8 @@ export default function MapViewPage() {
     toggleLootContainerType, toggleAllLootContainers, clearCurrentMap,
   } = useMapStore();
   const { questStatuses } = useProgressStore();
+  const { ownedKeys, fetchProgress: fetchKeyProgress } = useKeyStore();
+  const { token } = useAuthStore();
   const { position: playerPosition, history: positionHistory, watching, error: watchError, startWatching, stopWatching, isTauriAvailable } = useTauriScreenshot();
 
   // ── 맵 좌표 변환 설정 ─────────────────────────────────────────────────────
@@ -136,6 +140,7 @@ export default function MapViewPage() {
     if (!normalizedName) return;
     fetchMapDetail(normalizedName);
     fetchPositions(normalizedName);
+    if (token) fetchKeyProgress();
     return () => {
       clearCurrentMap();
       setSvgContent(null);
@@ -143,7 +148,7 @@ export default function MapViewPage() {
       setPan({ x: 0, y: 0 });
       setSelectedQuestIds(new Set());
     };
-  }, [normalizedName, fetchMapDetail, fetchPositions, clearCurrentMap]);
+  }, [normalizedName, fetchMapDetail, fetchPositions, clearCurrentMap, token, fetchKeyProgress]);
 
   // 맵에 층별 이미지가 있는지 확인
   const hasFloorImages = useMemo(
@@ -630,6 +635,7 @@ export default function MapViewPage() {
                   extractMarkers={visibleExtracts}
                   lockMarkers={visibleLocks}
                   lootContainerMarkers={visibleLootContainers}
+                  ownedKeys={ownedKeys}
                   getFloorDistance={getFloorDistance}
                   isCompleted={isCompleted}
                   onMarkerClick={handleMarkerClick}

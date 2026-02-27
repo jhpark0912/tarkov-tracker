@@ -22,4 +22,11 @@ public interface QuestObjectiveRepository extends JpaRepository<QuestObjective, 
             "WHERE o.map.id = :mapId " +
             "AND q.removed = false")
     List<QuestObjective> findMapMarkersForMap(@Param("mapId") Long mapId);
+
+    @Query("SELECT DISTINCT o FROM QuestObjective o " +
+            "JOIN FETCH o.quest q " +
+            "LEFT JOIN FETCH q.trader " +
+            "JOIN o.requiredItems ri " +
+            "WHERE ri.item.id = :itemId")
+    List<QuestObjective> findByRequiredItemId(@Param("itemId") Long itemId);
 }

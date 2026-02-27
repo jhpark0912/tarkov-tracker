@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Crown, ChevronRight, List, GitBranch, ChevronDown, Check, Circle, Loader2, Compass } from 'lucide-react';
+import { Search, Crown, ChevronRight, List, GitBranch, ChevronDown, Check, Circle, Loader2, Compass, Network } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useQuestStore } from '../../store/questStore';
@@ -207,6 +207,13 @@ export default function QuestListPage() {
           >
             <Compass size={16} />
             등대지기 퀘스트 트리
+          </Link>
+          <Link
+            to="/quests/tree/full"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-surface-alt/50 text-sm text-text-secondary hover:bg-surface-alt transition-colors no-underline"
+          >
+            <Network size={16} />
+            전체 의존 트리
           </Link>
         </div>
 

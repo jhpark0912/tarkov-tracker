@@ -83,4 +83,16 @@ public class QuestController {
     public ResponseEntity<QuestTreeResponse> getLightkeeperTree() {
         return ResponseEntity.ok(questService.getLightkeeperTree());
     }
+
+    /**
+     * 전체 퀘스트 의존 그래프 (트레이더/카파/등대지기 필터)
+     * GET /api/v1/quests/tree/full?trader=prapor&kappa=true&lightkeeper=false
+     */
+    @GetMapping("/tree/full")
+    public ResponseEntity<QuestTreeResponse> getFullDependencyTree(
+            @RequestParam(required = false) String trader,
+            @RequestParam(required = false) Boolean kappa,
+            @RequestParam(required = false) Boolean lightkeeper) {
+        return ResponseEntity.ok(questService.getFullDependencyTree(trader, kappa, lightkeeper));
+    }
 }

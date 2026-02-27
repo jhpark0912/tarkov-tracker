@@ -7,7 +7,7 @@ import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapLootContainerM
 type PopupData =
   | { type: 'quest'; data: QuestMapMarker; isCompleted: boolean }
   | { type: 'extract'; data: MapExtractMarker }
-  | { type: 'lock'; data: MapLockMarker }
+  | { type: 'lock'; data: MapLockMarker; isOwned?: boolean }
   | { type: 'lootContainer'; data: MapLootContainerMarker };
 
 interface Props {
@@ -34,7 +34,7 @@ export default function MapMarkerPopup({ popup, screenPos, containerWidth }: Pro
       <div className="pointer-events-auto bg-bg/95 backdrop-blur-md border border-border rounded-2xl p-4 w-56 shadow-xl">
         {popup.type === 'quest' && <QuestPopup data={popup.data} isCompleted={popup.isCompleted} />}
         {popup.type === 'extract' && <ExtractPopup data={popup.data} />}
-        {popup.type === 'lock' && <LockPopup data={popup.data} />}
+        {popup.type === 'lock' && <LockPopup data={popup.data} isOwned={popup.isOwned} />}
         {popup.type === 'lootContainer' && <LootContainerPopup data={popup.data} />}
       </div>
     </div>
@@ -91,12 +91,20 @@ function ExtractPopup({ data }: { data: MapExtractMarker }) {
   );
 }
 
-function LockPopup({ data }: { data: MapLockMarker }) {
+function LockPopup({ data, isOwned }: { data: MapLockMarker; isOwned?: boolean }) {
   return (
     <>
       <div className="flex items-center gap-2 mb-2">
-        <Lock size={14} className="text-red-400 shrink-0" />
+        <Lock size={14} className={isOwned ? 'text-complete shrink-0' : 'text-red-400 shrink-0'} />
         <span className="text-sm font-semibold text-text leading-tight">잠긴 문</span>
+        {isOwned !== undefined && (
+          <span className={cn(
+            'text-[9px] font-medium px-1.5 py-0.5 rounded ml-auto',
+            isOwned ? 'bg-complete/20 text-complete' : 'bg-red-500/20 text-red-400',
+          )}>
+            {isOwned ? '보유' : '미보유'}
+          </span>
+        )}
       </div>
       {data.keyName && (
         <div className="flex items-center gap-2 mt-1">

@@ -1,41 +1,70 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, Compass, Loader2 } from 'lucide-react';
+import { ArrowLeft, Crown, Compass, Loader2, GitBranch } from 'lucide-react';
 import type { Node, Edge } from '@xyflow/react';
-import { cn } from '../../utils/cn';
 import { questTreeApi } from '../../api/questTreeApi';
+import { questApi } from '../../api/questApi';
 import FlowGraph from '../../components/flow/FlowGraph';
 import { questNodeTypes } from '../../components/flow/nodeTypes';
 import { useAutoLayout } from '../../components/flow/useAutoLayout';
 import { useProgressStore } from '../../store/progressStore';
 import type { QuestTreeResponse } from '../../types/questTree';
-import type { QuestNodeData } from '../../components/flow/types';
+import TreeFilterBar from './components/TreeFilterBar';
 
 export default function QuestTreePage() {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
   const isKappa = type === 'kappa';
-  const isLightkeeper = type === 'lightkeeper';
+  const isFull = type === 'full';
 
   const [data, setData] = useState<QuestTreeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { questStatuses } = useProgressStore();
 
+  // full 트리 필터 상태
+  const [traderFilter, setTraderFilter] = useState('');
+  const [kappaOnly, setKappaOnly] = useState(false);
+  const [lightkeeperOnly, setLightkeeperOnly] = useState(false);
+  const [traders, setTraders] = useState<string[]>([]);
+
+  // 트레이더 목록 로드 (full 모드)
+  useEffect(() => {
+    if (!isFull) return;
+    questApi.getList().then((list) => {
+      const names = [...new Set(list.map((q) => q.trader?.name).filter(Boolean))] as string[];
+      setTraders(names.sort());
+    });
+  }, [isFull]);
+
+  // 트리 데이터 로드
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const fetchFn = isKappa ? questTreeApi.getKappaTree : questTreeApi.getLightkeeperTree;
-    fetchFn()
+
+    let fetchPromise: Promise<QuestTreeResponse>;
+    if (isFull) {
+      fetchPromise = questTreeApi.getFullTree({
+        trader: traderFilter || undefined,
+        kappa: kappaOnly || undefined,
+        lightkeeper: lightkeeperOnly || undefined,
+      });
+    } else if (isKappa) {
+      fetchPromise = questTreeApi.getKappaTree();
+    } else {
+      fetchPromise = questTreeApi.getLightkeeperTree();
+    }
+
+    fetchPromise
       .then(setData)
       .catch(() => setError('트리 데이터를 불러오는데 실패했습니다.'))
       .finally(() => setLoading(false));
-  }, [isKappa]);
+  }, [isKappa, isFull, traderFilter, kappaOnly, lightkeeperOnly]);
 
   const { nodes, edges } = useMemo(() => {
     if (!data) return { nodes: [], edges: [] };
 
-    const flowNodes: Node<QuestNodeData>[] = data.nodes.map((n) => ({
+    const flowNodes: Node[] = data.nodes.map((n) => ({
       id: String(n.id),
       type: 'quest',
       position: { x: 0, y: 0 },
@@ -48,7 +77,7 @@ export default function QuestTreePage() {
         minPlayerLevel: n.minPlayerLevel,
         kappaRequired: n.kappaRequired,
         lightkeeperRequired: n.lightkeeperRequired,
-        status: (questStatuses[String(n.id)] ?? 'NOT_STARTED') as QuestNodeData['status'],
+        status: questStatuses[String(n.id)] ?? 'NOT_STARTED',
       },
     }));
 
@@ -75,6 +104,18 @@ export default function QuestTreePage() {
     [navigate],
   );
 
+  const title = isFull
+    ? '전체 퀘스트 의존 트리'
+    : isKappa
+      ? '카파 퀘스트 트리'
+      : '등대지기 퀘스트 트리';
+
+  const titleIcon = isFull
+    ? <GitBranch size={20} className="text-text-secondary" />
+    : isKappa
+      ? <Crown size={20} className="text-gold" />
+      : <Compass size={20} className="text-accent" />;
+
   return (
     <div className="space-y-6">
       {/* 헤더 */}
@@ -84,11 +125,9 @@ export default function QuestTreePage() {
             <ArrowLeft size={20} className="text-text-muted hover:text-text transition-colors" />
           </Link>
           <div className="flex items-center gap-2">
-            {isKappa ? <Crown size={20} className="text-gold" /> : <Compass size={20} className="text-accent" />}
+            {titleIcon}
             <div>
-              <h1 className="text-xl font-bold text-text">
-                {isKappa ? '카파 퀘스트 트리' : '등대지기 퀘스트 트리'}
-              </h1>
+              <h1 className="text-xl font-bold text-text">{title}</h1>
               {data && (
                 <p className="text-sm text-text-muted">{data.nodes.length}개 퀘스트 · {data.edges.length}개 의존관계</p>
               )}
@@ -96,6 +135,19 @@ export default function QuestTreePage() {
           </div>
         </div>
       </div>
+
+      {/* 필터 바 (full 모드) */}
+      {isFull && (
+        <TreeFilterBar
+          traders={traders}
+          selectedTrader={traderFilter}
+          onTraderChange={setTraderFilter}
+          kappaOnly={kappaOnly}
+          onKappaToggle={() => setKappaOnly(!kappaOnly)}
+          lightkeeperOnly={lightkeeperOnly}
+          onLightkeeperToggle={() => setLightkeeperOnly(!lightkeeperOnly)}
+        />
+      )}
 
       {/* 로딩/에러 */}
       {loading && (

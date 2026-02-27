@@ -138,6 +138,75 @@ public class QuestService {
         return buildFilteredTree(null, true);
     }
 
+    /**
+     * 전체 퀘스트 의존 그래프 (트레이더/카파/등대지기 필터 가능)
+     */
+    public QuestTreeResponse getFullDependencyTree(String traderName, Boolean kappaRequired, Boolean lightkeeperRequired) {
+        Long traderId = null;
+        if (traderName != null) {
+            traderId = traderRepository.findByNameIgnoreCase(traderName)
+                    .map(t -> t.getId())
+                    .orElse(null);
+        }
+
+        List<Quest> allQuests = questRepository.findWithFilters(traderId, kappaRequired, lightkeeperRequired, null);
+        if (allQuests.isEmpty()) {
+            return QuestTreeResponse.builder().nodes(List.of()).edges(List.of()).build();
+        }
+
+        // 모든 선행조건 관계 한 번에 로드
+        List<QuestPrerequisite> allPrereqs = questPrerequisiteRepository.findAllWithDetails();
+
+        // 대상 퀘스트 ID 셋
+        Set<Long> targetIds = allQuests.stream().map(Quest::getId).collect(Collectors.toSet());
+
+        // 인접 리스트 생성 (quest → prereqs)
+        Map<Long, List<Quest>> prereqMap = new HashMap<>();
+        for (QuestPrerequisite p : allPrereqs) {
+            prereqMap.computeIfAbsent(p.getQuest().getId(), k -> new ArrayList<>())
+                    .add(p.getPrereqQuest());
+        }
+
+        Set<Long> visited = new HashSet<>();
+        List<QuestTreeResponse.TreeNode> nodes = new ArrayList<>();
+        List<QuestTreeResponse.TreeEdge> edges = new ArrayList<>();
+        Deque<Quest> queue = new ArrayDeque<>();
+
+        // 시드: 대상 퀘스트들
+        for (Quest q : allQuests) {
+            if (!visited.contains(q.getId())) {
+                visited.add(q.getId());
+                nodes.add(toTreeNode(q));
+                queue.add(q);
+            }
+        }
+
+        // BFS 역방향 탐색 (선행조건 퀘스트도 포함)
+        int depth = 0;
+        while (!queue.isEmpty() && depth < 20) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                Quest current = queue.poll();
+                List<Quest> prereqs = prereqMap.getOrDefault(current.getId(), List.of());
+                for (Quest prereq : prereqs) {
+                    edges.add(QuestTreeResponse.TreeEdge.builder()
+                            .source(prereq.getId())
+                            .target(current.getId())
+                            .build());
+
+                    if (!visited.contains(prereq.getId())) {
+                        visited.add(prereq.getId());
+                        nodes.add(toTreeNode(prereq));
+                        queue.add(prereq);
+                    }
+                }
+            }
+            depth++;
+        }
+
+        return QuestTreeResponse.builder().nodes(nodes).edges(edges).build();
+    }
+
     private QuestTreeResponse buildFilteredTree(Boolean kappaRequired, Boolean lightkeeperRequired) {
         List<Quest> targetQuests = questRepository.findWithFilters(null, kappaRequired, lightkeeperRequired, null);
         Set<Long> targetIds = new HashSet<>();

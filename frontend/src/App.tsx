@@ -11,6 +11,10 @@ import QuestDetailPage from './features/quests/QuestDetailPage';
 import QuestTreePage from './features/quests/QuestTreePage';
 import MapSelectPage from './features/map/MapSelectPage';
 import MapViewPage from './features/map/MapViewPage';
+import KeyListPage from './features/keys/KeyListPage';
+import KeyDetailPage from './features/keys/KeyDetailPage';
+import HideoutPage from './features/hideout/HideoutPage';
+import HideoutStationPage from './features/hideout/HideoutStationPage';
 import DecisionMapPage from './features/story/DecisionMapPage';
 import EndingPathPage from './features/story/EndingPathPage';
 import FullMapPage from './features/story/FullMapPage';
@@ -34,6 +38,10 @@ export default function App() {
           <Route path="/quests" element={<QuestListPage />} />
           <Route path="/quests/tree/:type" element={<QuestTreePage />} />
           <Route path="/quests/:id" element={<QuestDetailPage />} />
+          <Route path="/keys" element={<KeyListPage />} />
+          <Route path="/keys/:apiId" element={<KeyDetailPage />} />
+          <Route path="/hideout" element={<HideoutPage />} />
+          <Route path="/hideout/:apiId" element={<HideoutStationPage />} />
           <Route path="/map" element={<MapSelectPage />} />
           <Route path="/map/:normalizedName" element={<MapViewPage />} />
           <Route path="/story" element={<DecisionMapPage />} />

@@ -13,4 +13,8 @@ export const questTreeApi = {
   /** 등대지기 퀘스트 전체 의존 그래프 */
   getLightkeeperTree: () =>
     axiosInstance.get<QuestTreeResponse>('/quests/tree/lightkeeper').then((r) => r.data),
+
+  /** 전체 퀘스트 의존 그래프 (필터 가능) */
+  getFullTree: (params?: { trader?: string; kappa?: boolean; lightkeeper?: boolean }) =>
+    axiosInstance.get<QuestTreeResponse>('/quests/tree/full', { params }).then((r) => r.data),
 };

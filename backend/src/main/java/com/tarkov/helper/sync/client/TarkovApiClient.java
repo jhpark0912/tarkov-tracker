@@ -30,6 +30,12 @@ public class TarkovApiClient {
             }
             """;
 
+    private static final String HIDEOUT_QUERY = """
+            {
+              "query": "{ hideoutStations { id name normalizedName imageLink levels { level constructionTime description itemRequirements { item { id name shortName iconLink wikiLink width height } count } stationLevelRequirements { station { id name } level } skillRequirements { name level } traderRequirements { trader { id name } level } } } }"
+            }
+            """;
+
     public List<TarkovTaskDto> fetchTasks() {
         log.debug("tarkov.dev API - tasks 조회 시작");
         TarkovApiResponse<TarkovTasksData> response = tarkovWebClient.post()
@@ -46,6 +52,24 @@ public class TarkovApiClient {
         List<TarkovTaskDto> tasks = response.getData().getTasks();
         log.debug("tarkov.dev API - tasks 조회 완료: {}건", tasks.size());
         return tasks;
+    }
+
+    public List<TarkovHideoutStationDto> fetchHideoutStations() {
+        log.debug("tarkov.dev API - hideoutStations 조회 시작");
+        TarkovApiResponse<TarkovHideoutStationsData> response = tarkovWebClient.post()
+                .bodyValue(HIDEOUT_QUERY)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<TarkovApiResponse<TarkovHideoutStationsData>>() {})
+                .block();
+
+        if (response == null || response.getData() == null || response.getData().getHideoutStations() == null) {
+            log.warn("tarkov.dev API - hideoutStations 응답 없음");
+            return List.of();
+        }
+
+        List<TarkovHideoutStationDto> stations = response.getData().getHideoutStations();
+        log.debug("tarkov.dev API - hideoutStations 조회 완료: {}건", stations.size());
+        return stations;
     }
 
     public List<TarkovMapDto> fetchMaps() {

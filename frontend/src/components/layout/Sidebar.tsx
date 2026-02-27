@@ -5,6 +5,8 @@ import {
   ScrollText,
   BookOpen,
   Map,
+  Key,
+  Warehouse,
   LogIn,
   Settings,
   X,
@@ -22,6 +24,8 @@ import { adminApi, type SyncResult } from '../../api/adminApi';
 const navItems = [
   { icon: LayoutDashboard, label: '대시보드', path: '/' },
   { icon: ScrollText, label: '퀘스트', path: '/quests' },
+  { icon: Key, label: '키', path: '/keys' },
+  { icon: Warehouse, label: '은신처', path: '/hideout' },
   { icon: BookOpen, label: '메인 스토리', path: '/story' },
 ];
 
@@ -225,6 +229,7 @@ function SyncButton() {
                 <span>탈출구</span><span className="text-text">{result.extractsProcessed}</span>
                 <span>잠금</span><span className="text-text">{result.locksProcessed}</span>
                 <span>컨테이너</span><span className="text-text">{result.containersProcessed}</span>
+                <span>은신처</span><span className="text-text">{result.hideoutStationsProcessed}</span>
               </div>
               <p className="text-xs text-text-muted mt-2">{(result.durationMs / 1000).toFixed(1)}초 소요</p>
             </div>

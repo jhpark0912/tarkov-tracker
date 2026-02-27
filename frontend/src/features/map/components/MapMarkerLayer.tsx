@@ -18,6 +18,7 @@ interface Props {
   extractMarkers: MapExtractMarker[];
   lockMarkers: MapLockMarker[];
   lootContainerMarkers: MapLootContainerMarker[];
+  ownedKeys: Set<string>;
   getFloorDistance: (floorId: string | null) => number;
   isCompleted: (questId: number) => boolean;
   onMarkerClick: (popup: PopupData, e: React.MouseEvent) => void;
@@ -30,6 +31,7 @@ export default function MapMarkerLayer({
   extractMarkers,
   lockMarkers,
   lootContainerMarkers,
+  ownedKeys,
   getFloorDistance,
   isCompleted,
   onMarkerClick,
@@ -82,6 +84,7 @@ export default function MapMarkerLayer({
         const dist = getFloorDistance(marker.floorId);
         const ml = mapBounds.left + (marker.positionX / 100) * mapBounds.width;
         const mt = mapBounds.top + (marker.positionY / 100) * mapBounds.height;
+        const owned = marker.keyApiId ? ownedKeys.has(marker.keyApiId) : false;
         return (
           <div
             key={`lock-${i}`}
@@ -95,18 +98,24 @@ export default function MapMarkerLayer({
               zIndex: dist === 0 ? 8 : 4,
               transition: 'opacity 0.3s, filter 0.3s',
             }}
-            onClick={(e) => onMarkerClick({ type: 'lock', data: marker }, e)}
+            onClick={(e) => onMarkerClick({ type: 'lock', data: marker, isOwned: owned }, e)}
           >
             <div
-              className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center transition-transform group-hover:scale-125"
-              style={{ boxShadow: '0 0 6px rgba(239,68,68,0.5)' }}
+              className={cn(
+                'w-4 h-4 rounded-full flex items-center justify-center transition-transform group-hover:scale-125',
+                owned ? 'bg-complete' : 'bg-red-500',
+              )}
+              style={{ boxShadow: owned ? '0 0 6px rgba(78,204,163,0.5)' : '0 0 6px rgba(239,68,68,0.5)' }}
             >
               <Lock size={8} className="text-white" />
             </div>
             {!activePopup && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
-                <div className="bg-bg/90 backdrop-blur-sm text-text text-[9px] px-1.5 py-0.5 rounded-lg">
-                  {marker.keyShortName ?? '잠금'}
+                <div className={cn(
+                  'backdrop-blur-sm text-[9px] px-1.5 py-0.5 rounded-lg',
+                  owned ? 'bg-complete/20 text-complete' : 'bg-bg/90 text-text',
+                )}>
+                  {owned && '✓ '}{marker.keyShortName ?? '잠금'}
                 </div>
               </div>
             )}

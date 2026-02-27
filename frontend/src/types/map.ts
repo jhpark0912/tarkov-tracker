@@ -50,6 +50,7 @@ export interface MapExtractMarker {
 export interface MapLockMarker {
   lockType: string | null;
   needsPower: boolean | null;
+  keyApiId: string | null;
   keyName: string | null;
   keyShortName: string | null;
   keyIconUrl: string | null;

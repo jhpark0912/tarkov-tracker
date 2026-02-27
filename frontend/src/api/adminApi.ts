@@ -10,6 +10,7 @@ export interface SyncResult {
   extractsProcessed: number;
   locksProcessed: number;
   containersProcessed: number;
+  hideoutStationsProcessed: number;
   durationMs: number;
 }
 

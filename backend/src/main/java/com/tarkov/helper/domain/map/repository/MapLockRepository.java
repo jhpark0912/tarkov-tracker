@@ -15,4 +15,15 @@ public interface MapLockRepository extends JpaRepository<MapLock, Long> {
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM MapLock l WHERE l.gameMap = :map")
     void deleteByGameMap(@Param("map") GameMap map);
+
+    List<MapLock> findByKeyApiId(String keyApiId);
+
+    @Query("SELECT DISTINCT l.keyApiId FROM MapLock l WHERE l.keyApiId IS NOT NULL")
+    List<String> findDistinctKeyApiIds();
+
+    @Query("SELECT l FROM MapLock l JOIN FETCH l.gameMap WHERE l.keyApiId IS NOT NULL AND l.gameMap.id = :mapId")
+    List<MapLock> findLocksWithKeys(@Param("mapId") Long mapId);
+
+    @Query("SELECT l FROM MapLock l JOIN FETCH l.gameMap WHERE l.keyApiId IS NOT NULL")
+    List<MapLock> findAllWithKeys();
 }

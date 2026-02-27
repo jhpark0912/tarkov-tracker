@@ -6,6 +6,9 @@ import com.tarkov.helper.domain.progress.entity.UserItemProgress;
 import com.tarkov.helper.domain.progress.entity.UserQuestProgress;
 import com.tarkov.helper.domain.progress.entity.UserQuestProgress.QuestStatus;
 import com.tarkov.helper.domain.progress.repository.UserItemProgressRepository;
+import com.tarkov.helper.domain.progress.repository.UserHideoutItemProgressRepository;
+import com.tarkov.helper.domain.progress.repository.UserHideoutProgressRepository;
+import com.tarkov.helper.domain.progress.repository.UserKeyProgressRepository;
 import com.tarkov.helper.domain.progress.repository.UserQuestProgressRepository;
 import com.tarkov.helper.domain.quest.entity.Quest;
 import com.tarkov.helper.domain.quest.entity.QuestObjective;
@@ -27,6 +30,9 @@ public class ProgressService {
 
     private final UserQuestProgressRepository questProgressRepo;
     private final UserItemProgressRepository itemProgressRepo;
+    private final UserKeyProgressRepository keyProgressRepo;
+    private final UserHideoutProgressRepository hideoutProgressRepo;
+    private final UserHideoutItemProgressRepository hideoutItemProgressRepo;
     private final QuestRepository questRepository;
     private final QuestObjectiveRepository objectiveRepository;
 
@@ -156,6 +162,9 @@ public class ProgressService {
     public void resetProgress(Long userId) {
         itemProgressRepo.deleteAllByUserId(userId);
         questProgressRepo.deleteAllByUserId(userId);
+        keyProgressRepo.deleteAllByUserId(userId);
+        hideoutItemProgressRepo.deleteAllByUserId(userId);
+        hideoutProgressRepo.deleteAllByUserId(userId);
         log.info("유저 {} 진행 상태 초기화 완료", userId);
     }
 }

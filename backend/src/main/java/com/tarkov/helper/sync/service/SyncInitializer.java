@@ -1,5 +1,6 @@
 package com.tarkov.helper.sync.service;
 
+import com.tarkov.helper.domain.hideout.repository.HideoutStationRepository;
 import com.tarkov.helper.domain.quest.repository.QuestRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +18,17 @@ import org.springframework.stereotype.Component;
 public class SyncInitializer {
 
     private final QuestRepository questRepository;
+    private final HideoutStationRepository hideoutStationRepository;
     private final DataSyncService dataSyncService;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
-        if (questRepository.count() == 0) {
-            log.info("DB가 비어있습니다. 초기 동기화를 시작합니다.");
+        boolean questsEmpty = questRepository.count() == 0;
+        boolean hideoutEmpty = hideoutStationRepository.count() == 0;
+
+        if (questsEmpty || hideoutEmpty) {
+            String reason = questsEmpty ? "퀘스트 데이터 없음" : "은신처 데이터 없음";
+            log.info("초기 동기화를 시작합니다. (사유: {})", reason);
             try {
                 dataSyncService.syncAll();
             } catch (Exception e) {

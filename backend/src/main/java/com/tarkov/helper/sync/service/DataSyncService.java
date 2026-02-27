@@ -2,6 +2,9 @@ package com.tarkov.helper.sync.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tarkov.helper.domain.hideout.entity.*;
+import com.tarkov.helper.domain.hideout.repository.HideoutLevelRepository;
+import com.tarkov.helper.domain.hideout.repository.HideoutStationRepository;
 import com.tarkov.helper.domain.item.entity.Item;
 import com.tarkov.helper.domain.item.repository.ItemRepository;
 import com.tarkov.helper.domain.map.entity.GameMap;
@@ -38,6 +41,8 @@ public class DataSyncService {
     private final QuestRepository questRepository;
     private final QuestObjectiveRepository questObjectiveRepository;
     private final QuestPrerequisiteRepository questPrerequisiteRepository;
+    private final HideoutStationRepository hideoutStationRepository;
+    private final HideoutLevelRepository hideoutLevelRepository;
     private final MapPositionSyncService mapPositionSyncService;
     private final CoordinateConverter coordinateConverter;
     private final ObjectMapper objectMapper;
@@ -69,6 +74,9 @@ public class DataSyncService {
         // 3. 아이템 동기화 (objectives에서 추출)
         Map<String, Item> itemCache = syncItems(tasks);
 
+        // 3.5 은신처 동기화 (아이템 동기화 후)
+        int hideoutCount = syncHideoutStations(itemCache);
+
         // 4. 퀘스트 1차 (선행조건 없이 기본 데이터만)
         int[] questStats = new int[2]; // [0]=added, [1]=updated
         Map<String, Quest> questCache = syncQuestBase(tasks, traderCache, mapCache, questStats);
@@ -95,6 +103,7 @@ public class DataSyncService {
                 .extractsProcessed(positionStats[0])
                 .locksProcessed(positionStats[1])
                 .containersProcessed(positionStats.length > 2 ? positionStats[2] : 0)
+                .hideoutStationsProcessed(hideoutCount)
                 .durationMs(duration)
                 .build();
 
@@ -438,6 +447,122 @@ public class DataSyncService {
                     .foundInRaid(Boolean.TRUE.equals(objDto.getFoundInRaid()))
                     .build();
             objective.addRequiredItem(objItem);
+        }
+    }
+
+    // ─── 은신처 동기화 ──────────────────────────────────────────────────────────
+
+    private int syncHideoutStations(Map<String, Item> itemCache) {
+        List<TarkovHideoutStationDto> apiStations = tarkovApiClient.fetchHideoutStations();
+        if (apiStations.isEmpty()) {
+            log.warn("은신처 데이터 없음 — 건너뜀");
+            return 0;
+        }
+
+        int count = 0;
+        for (TarkovHideoutStationDto dto : apiStations) {
+            HideoutStation station = hideoutStationRepository.findByApiId(dto.getId()).orElse(null);
+            if (station == null) {
+                station = hideoutStationRepository.save(HideoutStation.builder()
+                        .apiId(dto.getId())
+                        .name(dto.getName())
+                        .normalizedName(dto.getNormalizedName())
+                        .imageLink(dto.getImageLink())
+                        .build());
+            } else {
+                station.update(dto.getName(), dto.getNormalizedName(), dto.getImageLink());
+            }
+
+            if (dto.getLevels() != null) {
+                syncHideoutLevels(station, dto.getLevels(), itemCache);
+            }
+            count++;
+        }
+
+        log.debug("은신처 동기화 완료: {}건", count);
+        return count;
+    }
+
+    private void syncHideoutLevels(HideoutStation station, List<TarkovHideoutLevelDto> levelDtos,
+                                    Map<String, Item> itemCache) {
+        // 기존 레벨 삭제 후 재생성 (cascade로 요구사항도 삭제)
+        station.getLevels().clear();
+        hideoutStationRepository.flush();
+
+        for (TarkovHideoutLevelDto dto : levelDtos) {
+            HideoutLevel level = HideoutLevel.builder()
+                    .station(station)
+                    .level(dto.getLevel() != null ? dto.getLevel() : 0)
+                    .constructionTime(dto.getConstructionTime())
+                    .description(dto.getDescription())
+                    .build();
+            level = hideoutLevelRepository.save(level);
+
+            // 아이템 요구사항
+            if (dto.getItemRequirements() != null) {
+                for (TarkovHideoutLevelDto.ItemRequirement req : dto.getItemRequirements()) {
+                    if (req.getItem() == null || req.getItem().getId() == null) continue;
+                    // 아이템 캐시에 없으면 upsert
+                    Item item = itemCache.get(req.getItem().getId());
+                    if (item == null) {
+                        item = itemRepository.findByApiId(req.getItem().getId()).orElse(null);
+                        if (item == null) {
+                            item = itemRepository.save(Item.builder()
+                                    .apiId(req.getItem().getId())
+                                    .name(req.getItem().getName() != null ? req.getItem().getName() : "Unknown")
+                                    .shortName(req.getItem().getShortName())
+                                    .iconUrl(req.getItem().getIconLink())
+                                    .wikiLink(req.getItem().getWikiLink())
+                                    .width(req.getItem().getWidth())
+                                    .height(req.getItem().getHeight())
+                                    .build());
+                        }
+                        itemCache.put(req.getItem().getId(), item);
+                    }
+                    level.getItemRequirements().add(HideoutItemRequirement.builder()
+                            .hideoutLevel(level)
+                            .item(item)
+                            .count(req.getCount() != null ? req.getCount() : 1)
+                            .build());
+                }
+            }
+
+            // 스테이션 요구사항
+            if (dto.getStationLevelRequirements() != null) {
+                for (TarkovHideoutLevelDto.StationRequirement req : dto.getStationLevelRequirements()) {
+                    if (req.getStation() == null) continue;
+                    level.getStationRequirements().add(HideoutStationRequirement.builder()
+                            .hideoutLevel(level)
+                            .requiredStationApiId(req.getStation().getId())
+                            .requiredStationName(req.getStation().getName())
+                            .requiredLevel(req.getLevel() != null ? req.getLevel() : 0)
+                            .build());
+                }
+            }
+
+            // 스킬 요구사항
+            if (dto.getSkillRequirements() != null) {
+                for (TarkovHideoutLevelDto.SkillRequirement req : dto.getSkillRequirements()) {
+                    level.getSkillRequirements().add(HideoutSkillRequirement.builder()
+                            .hideoutLevel(level)
+                            .skillName(req.getName() != null ? req.getName() : "Unknown")
+                            .skillLevel(req.getLevel() != null ? req.getLevel() : 0)
+                            .build());
+                }
+            }
+
+            // 트레이더 요구사항
+            if (dto.getTraderRequirements() != null) {
+                for (TarkovHideoutLevelDto.TraderRequirement req : dto.getTraderRequirements()) {
+                    if (req.getTrader() == null) continue;
+                    level.getTraderRequirements().add(HideoutTraderRequirement.builder()
+                            .hideoutLevel(level)
+                            .traderApiId(req.getTrader().getId())
+                            .traderName(req.getTrader().getName())
+                            .loyaltyLevel(req.getLevel() != null ? req.getLevel() : 1)
+                            .build());
+                }
+            }
         }
     }
 

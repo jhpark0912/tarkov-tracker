@@ -9,6 +9,7 @@ import lombok.Getter;
 public class MapLockMarker {
     private final String lockType;
     private final Boolean needsPower;
+    private final String keyApiId;
     private final String keyName;
     private final String keyShortName;
     private final String keyIconUrl;
@@ -20,6 +21,7 @@ public class MapLockMarker {
         return MapLockMarker.builder()
                 .lockType(entity.getLockType())
                 .needsPower(entity.getNeedsPower())
+                .keyApiId(entity.getKeyApiId())
                 .keyName(entity.getKeyName())
                 .keyShortName(entity.getKeyShortName())
                 .keyIconUrl(entity.getKeyIconUrl())
