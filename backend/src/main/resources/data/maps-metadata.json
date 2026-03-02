@@ -64,11 +64,20 @@
     "svgFile": "interchange.svg",
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 180,
-    "bounds": [[530, -439], [-364, 452]],
+    "bounds": [[598, -442], [-433, 426]],
     "floorRanges": [
-      { "floorId": "Ground_Level", "yMin": -99, "yMax": 25 },
-      { "floorId": "First_Floor",  "yMin": 25,  "yMax": 34 },
-      { "floorId": "Second_Floor", "yMin": 34,  "yMax": 99 }
+      { "floorId": "Ground_Level", "yMin": -99, "yMax": 99 }
+    ],
+    "floorZones": [
+      {
+        "xMin": -222, "xMax": 120,
+        "zMin": -327, "zMax": 218,
+        "floorRanges": [
+          { "floorId": "Ground_Level", "yMin": -99, "yMax": 25 },
+          { "floorId": "First_Floor",  "yMin": 25,  "yMax": 34 },
+          { "floorId": "Second_Floor", "yMin": 34,  "yMax": 99 }
+        ]
+      }
     ],
     "floors": [
       { "floorId": "Ground_Level", "floorLabel": "1층", "floorOrder": 0 },
@@ -80,7 +89,7 @@
     "svgFile": "reserve.svg",
     "defaultFloor": "Ground_Level",
     "coordinateRotation": 180,
-    "bounds": [[289, -338], [-303, 336]],
+    "bounds": [[289, -293], [-303, 244]],
     "floorRanges": [
       { "floorId": "Bunkers",      "yMin": -99, "yMax": -8 },
       { "floorId": "Ground_Level", "yMin": -8,  "yMax": 99 }
