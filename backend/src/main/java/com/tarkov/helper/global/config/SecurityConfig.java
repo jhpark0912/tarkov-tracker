@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/v1/sync/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         .requestMatchers("/api/v1/progress/**").authenticated()
                         .requestMatchers("/api/v1/story/progress/**").authenticated()

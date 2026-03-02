@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/v1/sync")
 @RequiredArgsConstructor
 public class SyncController {
 
@@ -19,9 +19,9 @@ public class SyncController {
 
     /**
      * 수동 동기화 트리거 (게임 패치 직후 사용)
-     * POST /api/v1/admin/sync
+     * POST /api/v1/sync/trigger
      */
-    @PostMapping("/sync")
+    @PostMapping("/trigger")
     public ResponseEntity<SyncResult> triggerSync() {
         log.info("수동 동기화 요청");
         SyncResult result = dataSyncService.syncAll();
