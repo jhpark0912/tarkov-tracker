@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Key, DoorOpen, ScrollText, MapPin, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, Key, DoorOpen, ScrollText, MapPin, ExternalLink, Loader2, Coins } from 'lucide-react';
 import { useKeyStore } from '../../store/keyStore';
 
 export default function KeyDetailPage() {
@@ -43,6 +43,10 @@ export default function KeyDetailPage() {
         <div>
           <h1 className="text-xl font-bold text-text">{detail.name}</h1>
           {detail.shortName && <p className="text-sm text-text-muted">{detail.shortName}</p>}
+          <p className="flex items-center gap-1 text-sm text-gold">
+            <Coins size={14} />
+            {detail.price != null ? `₽ ${detail.price.toLocaleString()}` : 'N/A'}
+          </p>
         </div>
         {detail.wikiLink && (
           <a

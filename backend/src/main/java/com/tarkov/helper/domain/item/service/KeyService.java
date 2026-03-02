@@ -74,6 +74,7 @@ public class KeyService {
                     name,
                     shortName,
                     sample.getKeyIconUrl(),
+                    sample.getKeyPrice(),
                     locks.size(),
                     questCountByApiId.getOrDefault(keyApiId, 0),
                     mapNames
@@ -116,7 +117,7 @@ public class KeyService {
         List<KeyDetail.KeyQuest> quests = findQuestsForKey(apiId);
 
         return new KeyDetail(apiId, name, sample.getKeyShortName(),
-                sample.getKeyIconUrl(), wikiLink, doors, quests);
+                sample.getKeyIconUrl(), sample.getKeyPrice(), wikiLink, doors, quests);
     }
 
     private List<KeyDetail.KeyQuest> findQuestsForKey(String keyApiId) {

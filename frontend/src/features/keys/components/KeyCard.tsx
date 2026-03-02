@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Key, DoorOpen, ScrollText, Check, MapPin } from 'lucide-react';
+import { Key, DoorOpen, ScrollText, Check, MapPin, Coins } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import type { KeyListItem } from '../../../types/key';
 
@@ -46,6 +46,10 @@ export default function KeyCard({ keyItem, owned, onToggleOwned, isLoggedIn }: K
                 {keyItem.questCount}개 퀘스트
               </span>
             )}
+            <span className="flex items-center gap-1">
+              <Coins size={12} />
+              {keyItem.price != null ? `₽ ${keyItem.price.toLocaleString()}` : 'N/A'}
+            </span>
           </div>
 
           <div className="flex flex-wrap gap-1.5 mt-2">

@@ -7,6 +7,7 @@ public record KeyDetail(
         String name,
         String shortName,
         String iconUrl,
+        Integer price,
         String wikiLink,
         List<KeyDoor> doors,
         List<KeyQuest> quests

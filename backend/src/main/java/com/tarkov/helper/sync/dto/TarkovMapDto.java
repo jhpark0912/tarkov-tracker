@@ -76,6 +76,7 @@ public class TarkovMapDto {
         private String name;
         private String shortName;
         private String iconLink;
+        private Integer avg24hPrice;
     }
 
     @Getter

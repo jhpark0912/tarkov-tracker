@@ -75,6 +75,7 @@ public class MapPositionSyncService {
                             .keyName(key != null ? key.getName() : null)
                             .keyShortName(key != null ? key.getShortName() : null)
                             .keyIconUrl(key != null ? key.getIconLink() : null)
+                            .keyPrice(key != null ? key.getAvg24hPrice() : null)
                             .floorId(pos.floorId())
                             .positionX(pos.positionX())
                             .positionY(pos.positionY())

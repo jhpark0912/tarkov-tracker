@@ -3,6 +3,7 @@ export interface KeyListItem {
   name: string;
   shortName: string | null;
   iconUrl: string | null;
+  price: number | null;
   doorCount: number;
   questCount: number;
   mapNames: string[];
@@ -30,6 +31,7 @@ export interface KeyDetail {
   name: string;
   shortName: string | null;
   iconUrl: string | null;
+  price: number | null;
   wikiLink: string | null;
   doors: KeyDoor[];
   quests: KeyQuest[];

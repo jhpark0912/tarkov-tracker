@@ -26,7 +26,7 @@ public class TarkovApiClient {
 
     private static final String MAPS_QUERY = """
             {
-              "query": "{ maps { id name normalizedName extracts { id name faction position { x y z } top bottom } locks { lockType needsPower key { id name shortName iconLink } position { x y z } top bottom } bosses { name spawnChance spawnLocations { name chance } } lootContainers { position { x y z } lootContainer { name normalizedName } } } }"
+              "query": "{ maps { id name normalizedName extracts { id name faction position { x y z } top bottom } locks { lockType needsPower key { id name shortName iconLink avg24hPrice } position { x y z } top bottom } bosses { name spawnChance spawnLocations { name chance } } lootContainers { position { x y z } lootContainer { name normalizedName } } } }"
             }
             """;
 

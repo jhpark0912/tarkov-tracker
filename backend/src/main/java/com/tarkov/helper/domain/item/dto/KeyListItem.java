@@ -7,6 +7,7 @@ public record KeyListItem(
         String name,
         String shortName,
         String iconUrl,
+        Integer price,
         int doorCount,
         int questCount,
         List<String> mapNames

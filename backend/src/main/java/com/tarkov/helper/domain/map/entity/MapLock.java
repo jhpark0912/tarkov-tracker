@@ -37,6 +37,9 @@ public class MapLock {
     @Column(name = "key_icon_url")
     private String keyIconUrl;
 
+    @Column(name = "key_price")
+    private Integer keyPrice;
+
     @Column(name = "floor_id", length = 50)
     private String floorId;
 
