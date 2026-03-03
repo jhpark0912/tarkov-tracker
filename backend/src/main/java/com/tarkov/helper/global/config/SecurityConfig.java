@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/story/progress/**").authenticated()
                         .requestMatchers("/api/v1/keys/progress/**").authenticated()
                         .requestMatchers("/api/v1/hideout/progress/**").authenticated()
+                        .requestMatchers("/api/v1/markers/**").authenticated()
                         .anyRequest().permitAll())
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {

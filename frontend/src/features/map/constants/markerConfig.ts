@@ -7,7 +7,7 @@ interface MarkerCategoryConfig {
   glowColor: string;
 }
 
-export const MARKER_CONFIG: Record<MarkerCategory, MarkerCategoryConfig> = {
+export const MARKER_CONFIG: Record<Exclude<MarkerCategory, 'customMarkers'>, MarkerCategoryConfig> = {
   quests: {
     label: '퀘스트',
     color: 'bg-gold',

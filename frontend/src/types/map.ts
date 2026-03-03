@@ -73,4 +73,4 @@ export interface MapPositionData {
   lootContainers: MapLootContainerMarker[];
 }
 
-export type MarkerCategory = 'quests' | 'extracts' | 'locks' | 'lootContainers';
+export type MarkerCategory = 'quests' | 'extracts' | 'locks' | 'lootContainers' | 'customMarkers';

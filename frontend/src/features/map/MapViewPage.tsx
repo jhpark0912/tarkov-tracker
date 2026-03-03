@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Eye, EyeOff, Crown, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw, LogOut, Lock, AlertCircle, Package, Check, X } from 'lucide-react';
+import { Eye, EyeOff, Crown, ChevronLeft, List, ZoomIn, ZoomOut, RotateCcw, LogOut, Lock, AlertCircle, Package, Check, X, MapPin } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
 import { useMapStore } from '../../store/mapStore';
@@ -10,17 +10,21 @@ import { useAuthStore } from '../../store/authStore';
 import MapQuestPanel from './components/MapQuestPanel';
 import MapMarkerLayer from './components/MapMarkerLayer';
 import MapMarkerPopup from './components/MapMarkerPopup';
+import CustomMarkerLayer from './components/CustomMarkerLayer';
+import MarkerCreateModal from './components/MarkerCreateModal';
+import MarkerEditModal from './components/MarkerEditModal';
 import { MARKER_CONFIG } from './constants/markerConfig';
 import { getContainerConfig } from './constants/containerConfig';
 import type { MarkerCategory } from '../../types/map';
 import type { PopupData } from './components/MapMarkerPopup';
+import { useCustomMarkers } from './hooks/useCustomMarkers';
 import PlayerPositionMarker from './components/PlayerPositionMarker';
 import PositionTrackerPanel from './components/PositionTrackerPanel';
 import { useTauriScreenshot } from '../../hooks/useTauriScreenshot';
 import type { MapBoundsConfig } from '../../utils/coordinateConverter';
 import mapsMetadata from '../../data/mapsMetadata.json';
 
-const CATEGORY_ICONS: Record<MarkerCategory, typeof AlertCircle> = {
+const CATEGORY_ICONS: Record<Exclude<MarkerCategory, 'customMarkers'>, typeof AlertCircle> = {
   quests: AlertCircle,
   extracts: LogOut,
   locks: Lock,
@@ -30,9 +34,11 @@ const CATEGORY_ICONS: Record<MarkerCategory, typeof AlertCircle> = {
 export default function MapViewPage() {
   const { normalizedName } = useParams<{ normalizedName: string }>();
   const {
-    currentMap, markers, positions, markerVisibility, lootContainerFilter, loading, error,
-    fetchMapDetail, fetchMarkers, fetchPositions, toggleMarkerCategory,
-    toggleLootContainerType, toggleAllLootContainers, clearCurrentMap,
+    currentMap, markers, positions, customMarkers, markerVisibility, lootContainerFilter, loading, error,
+    markerError,
+    fetchMapDetail, fetchMarkers, fetchPositions, fetchCustomMarkers,
+    toggleMarkerCategory, toggleLootContainerType, toggleAllLootContainers, clearCurrentMap,
+    clearMarkerError,
   } = useMapStore();
   const { questStatuses } = useProgressStore();
   const { ownedKeys, fetchProgress: fetchKeyProgress } = useKeyStore();
@@ -95,6 +101,13 @@ export default function MapViewPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showContainerFilter]);
 
+  // ── markerError 자동 소멸 (3초) ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!markerError) return;
+    const timer = setTimeout(() => clearMarkerError(), 3000);
+    return () => clearTimeout(timer);
+  }, [markerError, clearMarkerError]);
+
   // ── SVG 처리 ────────────────────────────────────────────────────────────────
   const svgHtml = useMemo(
     () => (svgContent ? { __html: svgContent } : undefined),
@@ -149,6 +162,13 @@ export default function MapViewPage() {
       setSelectedQuestIds(new Set());
     };
   }, [normalizedName, fetchMapDetail, fetchPositions, clearCurrentMap, token, fetchKeyProgress]);
+
+  // 커스텀 마커: 로그인 상태 + 맵 로드 시 조회
+  useEffect(() => {
+    if (currentMap && token) {
+      fetchCustomMarkers(currentMap.id);
+    }
+  }, [currentMap, token, fetchCustomMarkers]);
 
   // 맵에 층별 이미지가 있는지 확인
   const hasFloorImages = useMemo(
@@ -301,6 +321,16 @@ export default function MapViewPage() {
   };
 
   const handleMouseUp = () => { dragRef.current.active = false; setIsDragging(false); };
+
+  // ── 커스텀 마커 훅 ───────────────────────────────────────────────────────────
+  const {
+    createModalPos, setCreateModalPos,
+    activeCustomMarkerId, setActiveCustomMarkerId,
+    editingMarker, setEditingMarker,
+    handleContextMenu, handleCreateMarkerSave,
+    handleCustomMarkerClick, handleCustomMarkerDelete,
+    handleCustomMarkerEdit, handleCustomMarkerUpdate,
+  } = useCustomMarkers({ currentMap, selectedFloor, mapBounds, pan, zoom, token, dragRef, setPopup });
 
   const resetView = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
 
@@ -459,7 +489,7 @@ export default function MapViewPage() {
             <h2 className="text-lg font-semibold text-text mr-2">{currentMap.name}</h2>
 
             {/* 카테고리 토글 버튼 */}
-            {(Object.keys(MARKER_CONFIG) as MarkerCategory[]).map((cat) => {
+            {(Object.keys(MARKER_CONFIG) as Exclude<MarkerCategory, 'customMarkers'>[]).map((cat) => {
               const config = MARKER_CONFIG[cat];
               const Icon = CATEGORY_ICONS[cat];
               const isActive = markerVisibility[cat];
@@ -572,6 +602,25 @@ export default function MapViewPage() {
               퀘스트 목록
             </button>
 
+            {token && (
+              <>
+                <div className="h-5 w-px bg-border mx-1" />
+                <button
+                  onClick={() => toggleMarkerCategory('customMarkers')}
+                  className={cn(
+                    'flex items-center gap-2 text-sm rounded-xl px-4 py-2 transition-colors',
+                    markerVisibility.customMarkers ? 'bg-purple-500/20 text-purple-400' : 'bg-surface-alt text-text-secondary hover:text-text'
+                  )}
+                >
+                  <MapPin size={14} />
+                  내 마커
+                  {markerVisibility.customMarkers && customMarkers.length > 0 && (
+                    <span className="text-[10px] text-text-muted ml-1">({customMarkers.length})</span>
+                  )}
+                </button>
+              </>
+            )}
+
             <span className="text-xs text-text-muted ml-auto">{totalVisibleMarkers}개 마커</span>
           </div>
         </div>
@@ -588,8 +637,22 @@ export default function MapViewPage() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            onClick={() => { if (!dragRef.current.moved) setPopup(null); }}
+            onContextMenu={handleContextMenu}
+            onClick={() => {
+              if (!dragRef.current.moved) {
+                setPopup(null);
+                setActiveCustomMarkerId(null);
+                setCreateModalPos(null);
+              }
+            }}
           >
+            {/* 마커 에러 배너 */}
+            {markerError && (
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-red-500/90 backdrop-blur-sm text-white text-xs px-4 py-2 rounded-xl shadow-lg pointer-events-none">
+                {markerError}
+              </div>
+            )}
+
             {/* Zoomable layer */}
             <div
               className="absolute inset-0"
@@ -642,6 +705,18 @@ export default function MapViewPage() {
                   isCompleted={isCompleted}
                   onMarkerClick={handleMarkerClick}
                   activePopup={popup}
+                />
+              )}
+
+              {/* 커스텀 마커 레이어 */}
+              {mapBounds && markerVisibility.customMarkers && token && (
+                <CustomMarkerLayer
+                  markers={customMarkers}
+                  mapBounds={mapBounds}
+                  activeFloor={selectedFloor}
+                  floors={currentMap?.floors ?? []}
+                  onMarkerClick={handleCustomMarkerClick}
+                  activeMarkerId={activeCustomMarkerId}
                 />
               )}
 
@@ -725,11 +800,23 @@ export default function MapViewPage() {
             {/* 팝업 */}
             {popup && popupScreenPos && containerSize && (
               <MapMarkerPopup
-                popup={popup}
+                popup={popup.type === 'custom'
+                  ? { ...popup, onEdit: handleCustomMarkerEdit, onDelete: handleCustomMarkerDelete }
+                  : popup}
                 screenPos={popupScreenPos}
                 containerWidth={containerSize.w}
               />
             )}
+
+            {/* 커스텀 마커 생성 모달 */}
+            {createModalPos && (
+              <MarkerCreateModal
+                screenPos={createModalPos.screen}
+                onSave={handleCreateMarkerSave}
+                onClose={() => setCreateModalPos(null)}
+              />
+            )}
+
 
             {/* 조작 힌트 */}
             <div className="absolute bottom-4 left-4 text-[10px] text-text-muted/50 z-10 pointer-events-none">
@@ -749,6 +836,14 @@ export default function MapViewPage() {
           )}
         </div>
       </div>
+      {/* 커스텀 마커 수정 모달 (전체 오버레이) */}
+      {editingMarker && (
+        <MarkerEditModal
+          marker={editingMarker}
+          onSave={handleCustomMarkerUpdate}
+          onClose={() => setEditingMarker(null)}
+        />
+      )}
     </DebugOverlay>
   );
 }

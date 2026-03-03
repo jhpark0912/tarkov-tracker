@@ -1,12 +1,15 @@
 import { create } from 'zustand';
 import { mapApi } from '../api/mapApi';
+import { markerApi } from '../api/markerApi';
 import type { MapListItem, MapDetail, QuestMapMarker, MapPositionData, MarkerCategory } from '../types/map';
+import type { UserMapMarker, MarkerCreateRequest, MarkerUpdateRequest } from '../types/marker';
 
 interface MarkerVisibility {
   quests: boolean;
   extracts: boolean;
   locks: boolean;
   lootContainers: boolean;
+  customMarkers: boolean;
 }
 
 interface MapStore {
@@ -14,19 +17,26 @@ interface MapStore {
   currentMap: MapDetail | null;
   markers: QuestMapMarker[];
   positions: MapPositionData | null;
+  customMarkers: UserMapMarker[];
   markerVisibility: MarkerVisibility;
   lootContainerFilter: Set<string>;
   loading: boolean;
   error: string | null;
+  markerError: string | null;
 
   fetchMaps: () => Promise<void>;
   fetchMapDetail: (normalizedName: string) => Promise<void>;
   fetchMarkers: (mapId: number, floor?: string) => Promise<void>;
   fetchPositions: (normalizedName: string) => Promise<void>;
+  fetchCustomMarkers: (mapId: number) => Promise<void>;
+  addCustomMarker: (request: MarkerCreateRequest) => Promise<UserMapMarker>;
+  updateCustomMarker: (markerId: number, request: MarkerUpdateRequest) => Promise<void>;
+  deleteCustomMarker: (markerId: number) => Promise<void>;
   toggleMarkerCategory: (category: MarkerCategory) => void;
   toggleLootContainerType: (normalizedName: string) => void;
   toggleAllLootContainers: (allTypes: string[]) => void;
   clearCurrentMap: () => void;
+  clearMarkerError: () => void;
 }
 
 const DEFAULT_VISIBILITY: MarkerVisibility = {
@@ -34,6 +44,7 @@ const DEFAULT_VISIBILITY: MarkerVisibility = {
   extracts: true,
   locks: true,
   lootContainers: false,
+  customMarkers: true,
 };
 
 export const useMapStore = create<MapStore>((set) => ({
@@ -41,10 +52,12 @@ export const useMapStore = create<MapStore>((set) => ({
   currentMap: null,
   markers: [],
   positions: null,
+  customMarkers: [],
   markerVisibility: { ...DEFAULT_VISIBILITY },
   lootContainerFilter: new Set<string>(),
   loading: false,
   error: null,
+  markerError: null,
 
   fetchMaps: async () => {
     set({ loading: true, error: null });
@@ -89,6 +102,49 @@ export const useMapStore = create<MapStore>((set) => ({
     }
   },
 
+  fetchCustomMarkers: async (mapId) => {
+    try {
+      const customMarkers = await markerApi.getMarkers(mapId);
+      set({ customMarkers });
+    } catch {
+      set({ customMarkers: [] });
+    }
+  },
+
+  addCustomMarker: async (request) => {
+    try {
+      const marker = await markerApi.createMarker(request);
+      set((s) => ({ customMarkers: [...s.customMarkers, marker], markerError: null }));
+      return marker;
+    } catch (e) {
+      set({ markerError: '마커 생성에 실패했습니다.' });
+      throw e;
+    }
+  },
+
+  updateCustomMarker: async (markerId, request) => {
+    try {
+      const updated = await markerApi.updateMarker(markerId, request);
+      set((s) => ({
+        customMarkers: s.customMarkers.map((m) => (m.id === markerId ? updated : m)),
+        markerError: null,
+      }));
+    } catch (e) {
+      set({ markerError: '마커 수정에 실패했습니다.' });
+      throw e;
+    }
+  },
+
+  deleteCustomMarker: async (markerId) => {
+    try {
+      await markerApi.deleteMarker(markerId);
+      set((s) => ({ customMarkers: s.customMarkers.filter((m) => m.id !== markerId), markerError: null }));
+    } catch (e) {
+      set({ markerError: '마커 삭제에 실패했습니다.' });
+      throw e;
+    }
+  },
+
   toggleMarkerCategory: (category) =>
     set((state) => ({
       markerVisibility: {
@@ -116,8 +172,11 @@ export const useMapStore = create<MapStore>((set) => ({
 
   clearCurrentMap: () =>
     set({
-      currentMap: null, markers: [], positions: null, error: null,
+      currentMap: null, markers: [], positions: null, customMarkers: [], error: null,
+      markerError: null,
       markerVisibility: { ...DEFAULT_VISIBILITY },
       lootContainerFilter: new Set<string>(),
     }),
+
+  clearMarkerError: () => set({ markerError: null }),
 }));

@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Crown, Lock, LogOut, Box } from 'lucide-react';
+import { Crown, Lock, LogOut, Box, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { getContainerConfig } from '../constants/containerConfig';
+import { CUSTOM_MARKER_CONFIG } from '../constants/customMarkerConfig';
 import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapLootContainerMarker } from '../../../types/map';
+import type { UserMapMarker } from '../../../types/marker';
 
 type PopupData =
   | { type: 'quest'; data: QuestMapMarker; isCompleted: boolean }
   | { type: 'extract'; data: MapExtractMarker }
   | { type: 'lock'; data: MapLockMarker; isOwned?: boolean }
-  | { type: 'lootContainer'; data: MapLootContainerMarker };
+  | { type: 'lootContainer'; data: MapLootContainerMarker }
+  | { type: 'custom'; data: UserMapMarker; onEdit?: (marker: UserMapMarker) => void; onDelete?: (markerId: number) => void };
 
 interface Props {
   popup: PopupData;
@@ -36,6 +40,9 @@ export default function MapMarkerPopup({ popup, screenPos, containerWidth }: Pro
         {popup.type === 'extract' && <ExtractPopup data={popup.data} />}
         {popup.type === 'lock' && <LockPopup data={popup.data} isOwned={popup.isOwned} />}
         {popup.type === 'lootContainer' && <LootContainerPopup data={popup.data} />}
+        {popup.type === 'custom' && (
+          <CustomMarkerPopup data={popup.data} onEdit={popup.onEdit} onDelete={popup.onDelete} />
+        )}
       </div>
     </div>
   );
@@ -134,6 +141,81 @@ function LootContainerPopup({ data }: { data: MapLootContainerMarker }) {
         <span className="text-sm font-semibold text-text leading-tight">{data.containerName}</span>
       </div>
       <span className="text-[10px] text-text-muted">{config.label}</span>
+    </>
+  );
+}
+
+function CustomMarkerPopup({
+  data,
+  onEdit,
+  onDelete,
+}: {
+  data: UserMapMarker;
+  onEdit?: (marker: UserMapMarker) => void;
+  onDelete?: (markerId: number) => void;
+}) {
+  const config = CUSTOM_MARKER_CONFIG[data.type];
+  const markerColor = data.color ?? config.color;
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: markerColor }} />
+        <span className="text-sm font-semibold text-text leading-tight flex-1">{data.title}</span>
+        <span
+          className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+          style={{ backgroundColor: `${markerColor}22`, color: markerColor }}
+        >
+          {config.label}
+        </span>
+      </div>
+      {data.description && (
+        <p className="text-xs text-text-secondary mb-2 leading-relaxed">{data.description}</p>
+      )}
+      <p className="text-[9px] text-text-muted mb-3">
+        {new Date(data.createdAt).toLocaleDateString('ko-KR')}
+      </p>
+      {!confirmDelete ? (
+        <div className="flex gap-1.5 pt-2 border-t border-border">
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(data); }}
+              className="flex-1 flex items-center justify-center gap-1 py-1 text-[10px] text-text-secondary hover:text-text rounded-lg hover:bg-surface-alt transition-colors"
+            >
+              <Pencil size={10} />
+              수정
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+              className="flex-1 flex items-center justify-center gap-1 py-1 text-[10px] text-red-400 hover:text-red-300 rounded-lg hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 size={10} />
+              삭제
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="pt-2 border-t border-border">
+          <p className="text-[10px] text-text-secondary mb-2">정말 삭제할까요?</p>
+          <div className="flex gap-1.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }}
+              className="flex-1 py-1 text-[10px] text-text-muted border border-border rounded-lg hover:text-text transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete?.(data.id); }}
+              className="flex-1 py-1 text-[10px] font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
