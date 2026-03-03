@@ -83,7 +83,11 @@ export default function EndingPathPage() {
           />
         </div>
         <div className="w-full xl:w-80 xl:shrink-0">
-          <StoryDetailPanel nodeId={selectedNode} />
+          <StoryDetailPanel
+            nodeId={selectedNode}
+            pathNodes={ending.nodeIds}
+            onNodeSelect={handleNodeClick}
+          />
         </div>
       </div>
     </div>

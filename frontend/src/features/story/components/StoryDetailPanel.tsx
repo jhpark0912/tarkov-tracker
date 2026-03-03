@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { NODE_CHAPTER_MAP, STORY_NODE_MAP } from '../../../data/storyNodes';
 import type { StoryNodeData, StoryNodeType } from '../../../components/flow/types';
@@ -14,9 +14,13 @@ const TYPE_LABELS: Record<StoryNodeType, { label: string; color: string }> = {
 
 interface StoryDetailPanelProps {
   nodeId: string | null;
+  /** 현재 엔딩 경로의 노드 ID 순서 (진행도 및 네비게이션용) */
+  pathNodes?: string[];
+  /** 노드 선택 콜백 (이전/다음 버튼용) */
+  onNodeSelect?: (nodeId: string) => void;
 }
 
-export default function StoryDetailPanel({ nodeId }: StoryDetailPanelProps) {
+export default function StoryDetailPanel({ nodeId, pathNodes, onNodeSelect }: StoryDetailPanelProps) {
   if (!nodeId) {
     return (
       <div className="bg-surface border border-border rounded-xl p-5 text-center text-sm text-text-muted">
@@ -32,8 +36,43 @@ export default function StoryDetailPanel({ nodeId }: StoryDetailPanelProps) {
   const chapter = NODE_CHAPTER_MAP[nodeId];
   const typeInfo = TYPE_LABELS[data.type];
 
+  const position = pathNodes ? pathNodes.indexOf(nodeId) : -1;
+  const hasPrev = position > 0;
+  const hasNext = pathNodes ? position < pathNodes.length - 1 : false;
+
   return (
     <div className="bg-surface border border-border rounded-xl p-5 space-y-3">
+      {/* 진행도 + 네비게이션 */}
+      {pathNodes && position >= 0 && (
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-text-muted font-mono">
+            {position + 1} / {pathNodes.length} 스텝
+          </span>
+          <div className="flex gap-1">
+            <button
+              onClick={() => hasPrev && onNodeSelect?.(pathNodes[position - 1])}
+              disabled={!hasPrev}
+              className={cn(
+                'p-1 rounded-lg transition-colors',
+                hasPrev ? 'text-text-secondary hover:text-text hover:bg-elevated cursor-pointer' : 'text-text-muted cursor-not-allowed opacity-40'
+              )}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => hasNext && onNodeSelect?.(pathNodes[position + 1])}
+              disabled={!hasNext}
+              className={cn(
+                'p-1 rounded-lg transition-colors',
+                hasNext ? 'text-text-secondary hover:text-text hover:bg-elevated cursor-pointer' : 'text-text-muted cursor-not-allowed opacity-40'
+              )}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-bold text-text">{data.label}</h3>
