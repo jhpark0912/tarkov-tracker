@@ -400,7 +400,7 @@ export default function MapViewPage() {
 
   const visibleLocks = useMemo(
     () => markerVisibility.locks && positions?.locks
-      ? positions.locks.filter((m) => m.positionX !== null && m.positionY !== null)
+      ? positions.locks.filter((m) => m.positionX !== null && m.positionY !== null && m.lockType !== 'trunk')
       : [],
     [positions, markerVisibility.locks]
   );

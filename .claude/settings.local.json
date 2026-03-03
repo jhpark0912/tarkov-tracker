@@ -73,7 +73,19 @@
       "Bash(git status:*)",
       "Bash(git pull:*)",
       "mcp__plugin_playwright_playwright__browser_evaluate",
-      "mcp__plugin_serena_serena__check_onboarding_performed"
+      "mcp__plugin_serena_serena__check_onboarding_performed",
+      "Bash(sed:*)",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__agent-kanban__create_team",
+      "mcp__agent-kanban__add_agent",
+      "mcp__agent-kanban__create_task",
+      "mcp__agent-kanban__update_task_status",
+      "mcp__plugin_playwright_playwright__browser_tabs",
+      "Bash(tasklist:*)",
+      "Bash(netstat:*)",
+      "Bash(echo === Quest detail ===:*)",
+      "mcp__plugin_playwright_playwright__browser_network_requests",
+      "mcp__plugin_playwright_playwright__browser_install"
     ]
   }
 }
