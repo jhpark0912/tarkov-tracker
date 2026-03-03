@@ -34,6 +34,12 @@ jwt:
   secret: tarkov-helper-jwt-secret-key-for-development-only-change-in-production
   expiration: 86400000
 
+admin:
+  default:
+    username: admin
+    email: admin@tarkov.local
+    password: admin1234
+
 tarkov:
   api:
     url: https://api.tarkov.dev/graphql
