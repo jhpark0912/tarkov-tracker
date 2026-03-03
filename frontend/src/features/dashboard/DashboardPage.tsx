@@ -101,13 +101,15 @@ export default function DashboardPage() {
               sub={`${kappaCompleted} / ${kappaTotal} 퀘스트`}
               color="bg-gold/20 text-gold"
             />
-            <StatCard
-              icon={Zap}
-              label="진행 중"
-              value={String(inProgressCount)}
-              sub="퀘스트 진행 중"
-              color="bg-progress/20 text-progress"
-            />
+            <Link to="/quests?status=IN_PROGRESS" className="no-underline">
+              <StatCard
+                icon={Zap}
+                label="진행 중"
+                value={String(inProgressCount)}
+                sub="퀘스트 진행 중"
+                color="bg-progress/20 text-progress"
+              />
+            </Link>
             <StatCard
               icon={MapPin}
               label="주요 맵"

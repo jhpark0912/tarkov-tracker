@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Crown, ChevronRight, List, GitBranch, ChevronDown, Check, Circle, Loader2, Compass, Network } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import DebugOverlay from '../../components/debug/DebugOverlay';
@@ -99,10 +99,12 @@ function TraderSection({ trader, nodes, questStatuses }: { trader: string; nodes
 
 /* -- 메인 페이지 -- */
 export default function QuestListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
   const [search, setSearch] = useState('');
   const [traderFilter, setTraderFilter] = useState('');
   const [mapFilter, setMapFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') ?? '');
   const [kappaOnly, setKappaOnly] = useState(false);
   const [lightkeeperOnly, setLightkeeperOnly] = useState(false);
 
@@ -123,11 +125,15 @@ export default function QuestListPage() {
       if (search && !q.name.toLowerCase().includes(search.toLowerCase())) return false;
       if (traderFilter && q.trader?.name !== traderFilter) return false;
       if (mapFilter && q.mapName !== mapFilter) return false;
+      if (statusFilter) {
+        const qs = questStatuses[String(q.id)] ?? 'NOT_STARTED';
+        if (qs !== statusFilter) return false;
+      }
       if (kappaOnly && !q.kappaRequired) return false;
       if (lightkeeperOnly && !q.lightkeeperRequired) return false;
       return true;
     });
-  }, [quests, search, traderFilter, mapFilter, kappaOnly, lightkeeperOnly]);
+  }, [quests, search, traderFilter, mapFilter, statusFilter, questStatuses, kappaOnly, lightkeeperOnly]);
 
   const traders = useMemo(() => [...new Set(quests.map(q => q.trader?.name).filter(Boolean))].sort(), [quests]);
   const maps = useMemo(() => [...new Set(quests.map(q => q.mapName).filter(Boolean))].sort(), [quests]);
@@ -153,6 +159,19 @@ export default function QuestListPage() {
                 />
               </div>
 
+              <select
+                value={statusFilter}
+                onChange={e => {
+                  const val = e.target.value;
+                  setStatusFilter(val);
+                  if (val) { setSearchParams({ status: val }); } else { setSearchParams({}); }
+                }}
+                className="bg-surface-alt text-text-secondary text-sm rounded-xl px-4 py-2.5 border-none outline-none appearance-none cursor-pointer">
+                <option value="">전체 상태</option>
+                <option value="IN_PROGRESS">진행 중</option>
+                <option value="NOT_STARTED">미시작</option>
+                <option value="COMPLETED">완료</option>
+              </select>
               <select
                 value={traderFilter}
                 onChange={e => setTraderFilter(e.target.value)}
