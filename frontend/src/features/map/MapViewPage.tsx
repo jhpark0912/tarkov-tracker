@@ -40,7 +40,7 @@ export default function MapViewPage() {
     toggleMarkerCategory, toggleLootContainerType, toggleAllLootContainers, clearCurrentMap,
     clearMarkerError,
   } = useMapStore();
-  const { questStatuses } = useProgressStore();
+  const { questStatuses, fetchProgress: fetchQuestProgress } = useProgressStore();
   const { ownedKeys, fetchProgress: fetchKeyProgress } = useKeyStore();
   const { token } = useAuthStore();
   const { position: playerPosition, history: positionHistory, watching, error: watchError, startWatching, stopWatching, isTauriAvailable } = useTauriScreenshot();
@@ -153,7 +153,10 @@ export default function MapViewPage() {
     if (!normalizedName) return;
     fetchMapDetail(normalizedName);
     fetchPositions(normalizedName);
-    if (token) fetchKeyProgress();
+    if (token) {
+      fetchKeyProgress();
+      fetchQuestProgress();
+    }
     return () => {
       clearCurrentMap();
       setSvgContent(null);
@@ -161,7 +164,7 @@ export default function MapViewPage() {
       setPan({ x: 0, y: 0 });
       setSelectedQuestIds(new Set());
     };
-  }, [normalizedName, fetchMapDetail, fetchPositions, clearCurrentMap, token, fetchKeyProgress]);
+  }, [normalizedName, fetchMapDetail, fetchPositions, clearCurrentMap, token, fetchKeyProgress, fetchQuestProgress]);
 
   // 커스텀 마커: 로그인 상태 + 맵 로드 시 조회
   useEffect(() => {
@@ -361,6 +364,16 @@ export default function MapViewPage() {
   // ── 파생 값 ─────────────────────────────────────────────────────────────────
   const isCompleted = useCallback(
     (questId: number) => questStatuses[String(questId)] === 'COMPLETED',
+    [questStatuses]
+  );
+
+  const getQuestStatus = useCallback(
+    (questId: number): 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' => {
+      const status = questStatuses[String(questId)];
+      if (status === 'COMPLETED') return 'COMPLETED';
+      if (status === 'IN_PROGRESS') return 'IN_PROGRESS';
+      return 'NOT_STARTED';
+    },
     [questStatuses]
   );
 
@@ -703,6 +716,7 @@ export default function MapViewPage() {
                   ownedKeys={ownedKeys}
                   getFloorDistance={getFloorDistance}
                   isCompleted={isCompleted}
+                  getQuestStatus={getQuestStatus}
                   onMarkerClick={handleMarkerClick}
                   activePopup={popup}
                 />

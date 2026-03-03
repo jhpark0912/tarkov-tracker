@@ -4,11 +4,13 @@ import { Crown, Lock, LogOut, Box, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { getContainerConfig } from '../constants/containerConfig';
 import { CUSTOM_MARKER_CONFIG } from '../constants/customMarkerConfig';
+import { QUEST_STATUS_COLORS } from '../constants/markerConfig';
+import type { QuestStatus } from '../constants/markerConfig';
 import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapLootContainerMarker } from '../../../types/map';
 import type { UserMapMarker } from '../../../types/marker';
 
 type PopupData =
-  | { type: 'quest'; data: QuestMapMarker; isCompleted: boolean }
+  | { type: 'quest'; data: QuestMapMarker; questStatus: QuestStatus; /** @deprecated use questStatus */ isCompleted?: boolean }
   | { type: 'extract'; data: MapExtractMarker }
   | { type: 'lock'; data: MapLockMarker; isOwned?: boolean }
   | { type: 'lootContainer'; data: MapLootContainerMarker }
@@ -36,7 +38,7 @@ export default function MapMarkerPopup({ popup, screenPos, containerWidth }: Pro
       }}
     >
       <div className="pointer-events-auto bg-bg/95 backdrop-blur-md border border-border rounded-2xl p-4 w-56 shadow-xl">
-        {popup.type === 'quest' && <QuestPopup data={popup.data} isCompleted={popup.isCompleted} />}
+        {popup.type === 'quest' && <QuestPopup data={popup.data} questStatus={popup.questStatus} />}
         {popup.type === 'extract' && <ExtractPopup data={popup.data} />}
         {popup.type === 'lock' && <LockPopup data={popup.data} isOwned={popup.isOwned} />}
         {popup.type === 'lootContainer' && <LootContainerPopup data={popup.data} />}
@@ -48,7 +50,8 @@ export default function MapMarkerPopup({ popup, screenPos, containerWidth }: Pro
   );
 }
 
-function QuestPopup({ data, isCompleted }: { data: QuestMapMarker; isCompleted: boolean }) {
+function QuestPopup({ data, questStatus }: { data: QuestMapMarker; questStatus: QuestStatus }) {
+  const statusConfig = QUEST_STATUS_COLORS[questStatus];
   return (
     <>
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -76,8 +79,8 @@ function QuestPopup({ data, isCompleted }: { data: QuestMapMarker; isCompleted: 
         </div>
       )}
       <div className="mt-3 pt-2 border-t border-border">
-        <span className={cn('text-[10px] font-medium uppercase', isCompleted ? 'text-complete' : 'text-text-muted')}>
-          {isCompleted ? '완료' : '미완료'}
+        <span className={cn('text-[10px] font-medium uppercase', statusConfig.textColor)}>
+          {statusConfig.label}
         </span>
       </div>
     </>

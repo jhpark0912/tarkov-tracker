@@ -34,6 +34,14 @@ export const MARKER_CONFIG: Record<Exclude<MarkerCategory, 'customMarkers'>, Mar
   },
 };
 
+export type QuestStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export const QUEST_STATUS_COLORS: Record<QuestStatus, { bg: string; glow: string; label: string; textColor: string }> = {
+  NOT_STARTED: { bg: 'bg-gold', glow: 'rgba(230,184,0,0.5)', label: '미시작', textColor: 'text-text-muted' },
+  IN_PROGRESS: { bg: 'bg-blue-400', glow: 'rgba(96,165,250,0.5)', label: '진행 중', textColor: 'text-blue-400' },
+  COMPLETED: { bg: 'bg-complete/80', glow: 'rgba(52,211,153,0.5)', label: '완료', textColor: 'text-complete' },
+};
+
 export function getExtractColor(faction: string | null): { bg: string; glow: string } {
   switch (faction) {
     case 'pmc':

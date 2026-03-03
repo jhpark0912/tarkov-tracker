@@ -1,6 +1,7 @@
 import { AlertCircle, LogOut, Lock, Box } from 'lucide-react';
 import { cn } from '../../../utils/cn';
-import { getExtractColor } from '../constants/markerConfig';
+import { getExtractColor, QUEST_STATUS_COLORS } from '../constants/markerConfig';
+import type { QuestStatus } from '../constants/markerConfig';
 import { getContainerConfig } from '../constants/containerConfig';
 import type { QuestMapMarker, MapExtractMarker, MapLockMarker, MapLootContainerMarker } from '../../../types/map';
 import type { PopupData } from './MapMarkerPopup';
@@ -21,6 +22,7 @@ interface Props {
   ownedKeys: Set<string>;
   getFloorDistance: (floorId: string | null) => number;
   isCompleted: (questId: number) => boolean;
+  getQuestStatus: (questId: number) => QuestStatus;
   onMarkerClick: (popup: PopupData, e: React.MouseEvent) => void;
   activePopup: PopupData | null;
 }
@@ -34,6 +36,7 @@ export default function MapMarkerLayer({
   ownedKeys,
   getFloorDistance,
   isCompleted,
+  getQuestStatus,
   onMarkerClick,
   activePopup,
 }: Props) {
@@ -167,7 +170,8 @@ export default function MapMarkerLayer({
         const dist = getFloorDistance(marker.floorId);
         const ml = mapBounds.left + (marker.positionX! / 100) * mapBounds.width;
         const mt = mapBounds.top + (marker.positionY! / 100) * mapBounds.height;
-        const completed = isCompleted(marker.questId);
+        const status = getQuestStatus(marker.questId);
+        const statusColor = QUEST_STATUS_COLORS[status];
         return (
           <div
             key={`quest-${marker.objectiveId}`}
@@ -181,18 +185,14 @@ export default function MapMarkerLayer({
               zIndex: dist === 0 ? 10 : 5,
               transition: 'opacity 0.3s, filter 0.3s',
             }}
-            onClick={(e) => onMarkerClick({ type: 'quest', data: marker, isCompleted: completed }, e)}
+            onClick={(e) => onMarkerClick({ type: 'quest', data: marker, questStatus: status }, e)}
           >
             <div
               className={cn(
                 'w-5 h-5 rounded-full flex items-center justify-center transition-transform group-hover:scale-125',
-                completed ? 'bg-complete/80' : 'bg-gold'
+                statusColor.bg
               )}
-              style={{
-                boxShadow: completed
-                  ? '0 0 8px rgba(52,211,153,0.5)'
-                  : '0 0 8px rgba(230,184,0,0.5)',
-              }}
+              style={{ boxShadow: `0 0 8px ${statusColor.glow}` }}
             >
               <AlertCircle size={10} className="text-bg" />
             </div>
