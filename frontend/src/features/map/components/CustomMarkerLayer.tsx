@@ -47,7 +47,7 @@ export default function CustomMarkerLayer({
               left: `${ml}px`,
               top: `${mt}px`,
               transform: 'translate(-50%, -50%)',
-              opacity: dist === 0 ? 1 : dist === 1 ? 0.4 : 0.2,
+              opacity: dist === 0 ? 0.75 : dist === 1 ? 0.4 : 0.2,
               filter: dist > 0 ? `blur(${Math.min(dist, 2)}px)` : 'none',
               zIndex: dist === 0 ? 11 : 6,
               transition: 'opacity 0.3s, filter 0.3s',
